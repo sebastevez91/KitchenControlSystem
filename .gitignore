@@ -77,7 +77,7 @@ secrets.json
 # Entity Framework
 # ========================
 # No ignorar migraciones
-!**/Migrations/
+**/Migrations/
 
 # ========================
 # Publicación
