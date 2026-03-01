@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using CocinaManager.Application.DTOs;
 using CocinaManager.Application.Interfaces;
+using CocinaManager.Domain.Enums;
 
 namespace CocinaManager.API.Controllers;
 
@@ -16,38 +17,34 @@ public class PersonalController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<PersonalDto>>> GetAll()
+    public async Task<IActionResult> GetAll()
+        => Ok(await _service.GetAllAsync());
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id)
     {
-        return Ok(await _service.GetAllAsync());
-    }
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<PersonalDto>> GetById(Guid id)
-    {
-        var personal = await _service.GetByIdAsync(id);
-
-        if (personal == null)
-            return NotFound();
-
-        return Ok(personal);
+        var result = await _service.GetByIdAsync(id);
+        return result == null ? NotFound() : Ok(result);
     }
 
     [HttpPost]
-    public async Task<ActionResult> Create(CreatePersonalDto dto)
+    public async Task<IActionResult> Create([FromBody] CreatePersonalDto dto)
     {
-        var id = await _service.CreateAsync(dto);
-
-        return CreatedAtAction(nameof(GetById), new { id }, null);
+        var created = await _service.CreateAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
-    [HttpDelete("{id}")]
-    public async Task<ActionResult> Delete(Guid id)
+    [HttpPatch("{id:guid}/estado")]
+    public async Task<IActionResult> CambiarEstado(Guid id, [FromBody] EstadoPersonal nuevoEstado)
     {
-        var deleted = await _service.DeleteAsync(id);
+        var ok = await _service.CambiarEstadoAsync(id, nuevoEstado);
+        return ok ? NoContent() : NotFound();
+    }
 
-        if (!deleted)
-            return NotFound();
-
-        return NoContent();
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var ok = await _service.DeleteAsync(id);
+        return ok ? NoContent() : NotFound();
     }
 }

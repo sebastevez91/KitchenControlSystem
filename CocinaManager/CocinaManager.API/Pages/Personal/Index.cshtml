@@ -1,0 +1,249 @@
+﻿@page
+@model CocinaManager.API.Pages.Personal.IndexModel
+@{
+    ViewData["Title"] = "Personal";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-people-fill me-2"></i>Personal</h1>
+        <p class="text-muted mb-0">Gestión de empleados y turnos</p>
+    </div>
+    @if (User.IsInRole("Admin"))
+    {
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoPersonal">
+        <i class="bi bi-plus-lg me-1"></i> Nuevo Personal
+        </button>   
+    }
+
+</div>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Tabla Personal -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-person-lines-fill me-2"></i>Listado de Personal</span>
+        <span class="badge bg-primary">@Model.Personal.Count empleados</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Documento</th>
+                        <th>Cargo</th>
+                        <th>Estado</th>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <th>Cambiar Estado</th>
+                            <th>Acciones</th>
+                        }
+                        else
+                        {
+                            <th></th>
+                            <th></th>                            
+                        }
+
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model.Personal)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@p.Nombre</td>
+                            <td>@p.Documento</td>
+                            <td>@p.Cargo</td>
+                            <td>
+                                @{
+                                    var badgeColor = p.Estado switch
+                                    {
+                                        EstadoPersonal.Activo => "success",
+                                        EstadoPersonal.Enfermo => "danger",
+                                        EstadoPersonal.Licencia => "warning",
+                                        EstadoPersonal.Ausente => "secondary",
+                                        _ => "secondary"
+                                    };
+                                }
+                                <span class="badge bg-@badgeColor badge-estado">@p.Estado</span>
+                            </td>
+                            <td>
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <form method="post" asp-page-handler="CambiarEstado" class="d-flex gap-1">
+                                        <input type="hidden" name="id" value="@p.Id" />
+                                        <select name="estado" class="form-select form-select-sm" style="width:auto;">
+                                            @foreach (var e in Enum.GetValues<EstadoPersonal>())
+                                            {
+                                                <option value="@((int)e)" selected="@(e == p.Estado)">@e</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                            <td>
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <form method="post" asp-page-handler="EliminarPersonal"
+                                          onsubmit="return confirm('¿Eliminar a @p.Nombre?')">
+                                        <input type="hidden" name="id" value="@p.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla Turnos -->
+<div class="card">
+    @if (User.IsInRole("Admin"))
+    {
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-calendar3 me-2"></i>Turnos asignados</span>
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoTurno">
+                <i class="bi bi-plus-lg me-1"></i> Asignar Turno
+            </button>
+        </div>        
+    }
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Personal</th>
+                        <th>Fecha</th>
+                        <th>Turno</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in Model.Turnos)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@t.NombrePersonal</td>
+                            <td>@t.Fecha.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                @{
+                                    var turnoColor = t.TipoTurno switch
+                                    {
+                                        TipoTurno.Manana => "warning",
+                                        TipoTurno.Tarde => "info",
+                                        TipoTurno.Noche => "dark",
+                                        _ => "secondary"
+                                    };
+                                }
+                                <span class="badge bg-@turnoColor badge-estado">@t.TipoTurno</span>
+                            </td>
+                            <td>
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <form method="post" asp-page-handler="EliminarTurno">
+                                        <input type="hidden" name="id" value="@t.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Personal -->
+<div class="modal fade" id="modalNuevoPersonal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Nuevo Personal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="CrearPersonal">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nombre</label>
+                        <input asp-for="NuevoPersonal.Nombre" class="form-control" placeholder="Nombre completo" />
+                        <span asp-validation-for="NuevoPersonal.Nombre" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Documento</label>
+                        <input asp-for="NuevoPersonal.Documento" class="form-control" placeholder="DNI o CUIT" />
+                        <span asp-validation-for="NuevoPersonal.Documento" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Cargo</label>
+                        <input asp-for="NuevoPersonal.Cargo" class="form-control" placeholder="Ej: Chef, Ayudante" />
+                        <span asp-validation-for="NuevoPersonal.Cargo" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Turno -->
+<div class="modal fade" id="modalNuevoTurno" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Asignar Turno</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="CrearTurno">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Personal</label>
+                        <select asp-for="NuevoTurno.PersonalId" class="form-select">
+                            <option value="">-- Seleccioná --</option>
+                            @foreach (var p in Model.Personal)
+                            {
+                                <option value="@p.Id">@p.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Fecha</label>
+                        <input asp-for="NuevoTurno.Fecha" type="date" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipo de Turno</label>
+                        <select asp-for="NuevoTurno.TipoTurno" class="form-select">
+                            @foreach (var t in Enum.GetValues<TipoTurno>())
+                            {
+                                <option value="@((int)t)">@t</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Asignar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

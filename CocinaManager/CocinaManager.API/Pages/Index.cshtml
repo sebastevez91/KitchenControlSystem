@@ -1,0 +1,281 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<!-- Bienvenida -->
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h1 class="mb-1">
+            👋 Bienvenido, <span style="color:#667eea;">@Model.NombreUsuario</span>
+        </h1>
+        <p class="text-muted mb-0">
+            <i class="bi bi-calendar3 me-1"></i>
+            @Model.FechaHoy.ToString("dddd, dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-AR"))
+            &nbsp;·&nbsp;
+            <span class="badge" style="background-color:#764ba2;">@Model.RolUsuario</span>
+        </p>
+    </div>
+    <!-- Avatar -->
+    <div
+        
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div style="font-size:2rem; font-weight:700;">@Model.TotalPersonal</div>
+                    <div style="opacity:0.85;">Personal activo</div>
+                </div>
+                <i class="bi bi-people-fill" style="font-size:2.5rem; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div style="font-size:2rem; font-weight:700;">@Model.ProductosStockBajo</div>
+                    <div style="opacity:0.85;">Stock bajo</div>
+                </div>
+                <i class="bi bi-exclamation-triangle-fill" style="font-size:2.5rem; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div style="font-size:2rem; font-weight:700;">@Model.HerramientasEnReparacion</div>
+                    <div style="opacity:0.85;">En reparación</div>
+                </div>
+                <i class="bi bi-wrench-fill" style="font-size:2.5rem; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div style="font-size:2rem; font-weight:700;">@Model.OrdenesPendientes.Count</div>
+                    <div style="opacity:0.85;">Órdenes pendientes</div>
+                </div>
+                <i class="bi bi-clipboard-x" style="font-size:2.5rem; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #f5576c, #f093fb);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div style="font-size:2rem; font-weight:700;">@Model.IncidentesAbiertos</div>
+                    <div style="opacity:0.85;">Incidentes abiertos</div>
+                </div>
+                <i class="bi bi-exclamation-octagon-fill" style="font-size:2.5rem; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- Turnos de hoy -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-calendar-check me-2 text-primary"></i>Turnos de hoy</span>
+                <span class="badge bg-primary">@Model.TurnosHoy.Count</span>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.TurnosHoy.Any())
+                {
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-calendar-x" style="font-size:2rem;"></i>
+                        <p class="mt-2 mb-0">No hay turnos asignados para hoy</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Personal</th>
+                                    <th>Turno</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var t in Model.TurnosHoy)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">
+                                            <i class="bi bi-person-circle me-1 text-muted"></i>
+                                            @t.NombrePersonal
+                                        </td>
+                                        <td>
+                                            @{
+                                                var turnoColor = t.TipoTurno.ToString() switch
+                                                {
+                                                    "Manana" => "warning",
+                                                    "Tarde" => "info",
+                                                    "Noche" => "dark",
+                                                    _ => "secondary"
+                                                };
+                                                var turnoIcon = t.TipoTurno.ToString() switch
+                                                {
+                                                    "Manana" => "bi-sunrise",
+                                                    "Tarde" => "bi-sun",
+                                                    "Noche" => "bi-moon-stars",
+                                                    _ => "bi-clock"
+                                                };
+                                            }
+                                            <span class="badge bg-@turnoColor badge-estado">
+                                                <i class="bi @turnoIcon me-1"></i>@t.TipoTurno
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Órdenes pendientes -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clipboard-x me-2 text-warning"></i>Órdenes pendientes</span>
+                <span class="badge bg-warning text-dark">@Model.OrdenesPendientes.Count</span>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.OrdenesPendientes.Any())
+                {
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle" style="font-size:2rem; color:#28a745;"></i>
+                        <p class="mt-2 mb-0">No hay órdenes pendientes</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Herramienta</th>
+                                    <th>Descripción</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var o in Model.OrdenesPendientes)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@o.NombreHerramienta</td>
+                                        <td class="text-muted small">
+                                            @(o.Descripcion.Length > 40
+                                                                                ? o.Descripcion[..40] + "..."
+                                                                                : o.Descripcion)
+                                        </td>
+                                        <td>
+                                            @{
+                                                var ordenColor = o.EstadoOrden.ToString() switch
+                                                {
+                                                    "Pendiente" => "warning",
+                                                    "EnProceso" => "info",
+                                                    _ => "secondary"
+                                                };
+                                            }
+                                            <span class="badge bg-@ordenColor badge-estado">
+                                                @o.EstadoOrden
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+            @if (Model.OrdenesPendientes.Any())
+            {
+                <div class="card-footer text-end bg-white border-top-0">
+                    <a href="/Mantenimiento" class="btn btn-sm btn-outline-warning">
+                        Ver todas <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Personal inactivo -->
+    @if (Model.PersonalInactivo.Any())
+    {
+        <div class="col-12">
+            <div class="card border-0" style="background: #fff8e1;">
+                <div class="card-header d-flex align-items-center gap-2"
+                     style="background: #fff3cd; border-bottom: 1px solid #ffeaa7;">
+                    <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                    <span class="fw-semibold">Personal fuera de servicio hoy</span>
+                    <span class="badge bg-warning text-dark ms-auto">@Model.PersonalInactivo.Count</span>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var p in Model.PersonalInactivo)
+                        {
+                            var badgeColor = p.Estado.ToString() switch
+                            {
+                                "Enfermo" => "danger",
+                                "Licencia" => "warning",
+                                "Ausente" => "secondary",
+                                _ => "secondary"
+                            };
+                            <span class="badge bg-@badgeColor badge-estado fs-6 fw-normal px-3 py-2">
+                                <i class="bi bi-person me-1"></i>@p.Nombre — @p.Estado
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Accesos rápidos -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-lightning-charge-fill me-2 text-warning"></i>Accesos rápidos
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <a href="/Personal" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-people-fill d-block mb-1" style="font-size:1.5rem;"></i>
+                            Gestionar Personal
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/Deposito" class="btn btn-outline-success w-100 py-3">
+                            <i class="bi bi-box-seam-fill d-block mb-1" style="font-size:1.5rem;"></i>
+                            Gestionar Depósito
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/Mantenimiento" class="btn btn-outline-info w-100 py-3">
+                            <i class="bi bi-wrench-fill d-block mb-1" style="font-size:1.5rem;"></i>
+                            Gestionar Mantenimiento
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,206 @@
+﻿@page
+@model CocinaManager.API.Pages.Ausencias.IndexModel
+@using CocinaManager.Domain.Enums
+@{
+    ViewData["Title"] = "Ausencias y Licencias";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-calendar-x me-2"></i>Ausencias y Licencias</h1>
+        <p class="text-muted mb-0">Historial de ausencias del personal</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaAusencia">
+        <i class="bi bi-plus-lg me-1"></i> Registrar Ausencia
+    </button>
+</div>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div style="font-size:2rem; font-weight:700;">@Model.Ausencias.Count</div>
+                    <div style="opacity:0.85;">Ausencias registradas</div>
+                </div>
+                <i class="bi bi-calendar-x" style="font-size:2.5rem; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div style="font-size:2rem; font-weight:700;">@Model.TotalDiasAusencia</div>
+                    <div style="opacity:0.85;">Días de ausencia totales</div>
+                </div>
+                <i class="bi bi-clock-history" style="font-size:2.5rem; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div style="font-size:2rem; font-weight:700;">
+                        @Model.Ausencias.Count(a => a.Tipo == TipoAusencia.Enfermedad)
+                    </div>
+                    <div style="opacity:0.85;">Por enfermedad</div>
+                </div>
+                <i class="bi bi-bandaid" style="font-size:2.5rem; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-list-ul me-2"></i>Historial completo</span>
+        <span class="badge bg-primary">@Model.Ausencias.Count registros</span>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Ausencias.Any())
+        {
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-calendar-check" style="font-size:3rem; color:#28a745;"></i>
+                <p class="mt-2 mb-0 fw-semibold">Sin ausencias registradas</p>
+                <p class="small">Todo el personal presente.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Personal</th>
+                            <th>Tipo</th>
+                            <th>Desde</th>
+                            <th>Hasta</th>
+                            <th>Días</th>
+                            <th>Registrado por</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var a in Model.Ausencias)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar-circle avatar-sm">
+                                            @a.NombrePersonal[..Math.Min(2, a.NombrePersonal.Length)].ToUpper()
+                                        </div>
+                                        <span class="fw-semibold">@a.NombrePersonal</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    @{
+                                        var tipoColor = a.Tipo switch
+                                        {
+                                            TipoAusencia.Enfermedad => "danger",
+                                            TipoAusencia.Licencia => "info",
+                                            TipoAusencia.AusenciaInjustificada => "warning",
+                                            TipoAusencia.Vacaciones => "success",
+                                            _ => "secondary"
+                                        };
+                                        var tipoIcon = a.Tipo switch
+                                        {
+                                            TipoAusencia.Enfermedad => "bi-bandaid",
+                                            TipoAusencia.Licencia => "bi-file-earmark-text",
+                                            TipoAusencia.AusenciaInjustificada => "bi-exclamation-triangle",
+                                            TipoAusencia.Vacaciones => "bi-umbrella",
+                                            _ => "bi-question"
+                                        };
+                                    }
+                                    <span class="badge bg-@tipoColor badge-estado">
+                                        <i class="bi @tipoIcon me-1"></i>@a.Tipo
+                                    </span>
+                                </td>
+                                <td>@a.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                <td>@a.FechaFin.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <span class="badge bg-secondary">@a.DiasAusencia días</span>
+                                </td>
+                                <td class="text-muted small">@a.RegistradoPor</td>
+                                <td>
+                                    <form method="post" asp-page-handler="Eliminar"
+                                          onsubmit="return confirm('¿Eliminar esta ausencia?')">
+                                        <input type="hidden" name="id" value="@a.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal Nueva Ausencia -->
+<div class="modal fade" id="modalNuevaAusencia" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-calendar-x me-2"></i>Registrar Ausencia
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Crear">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Personal</label>
+                        <select asp-for="NuevaAusencia.PersonalId" class="form-select">
+                            <option value="">-- Seleccioná --</option>
+                            @foreach (var p in Model.Personal)
+                            {
+                                <option value="@p.Id">@p.Nombre — @p.Cargo</option>
+                            }
+                        </select>
+                        <span asp-validation-for="NuevaAusencia.PersonalId" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipo de ausencia</label>
+                        <select asp-for="NuevaAusencia.Tipo" class="form-select">
+                            <option value="1">🩹 Enfermedad</option>
+                            <option value="2">📄 Licencia</option>
+                            <option value="3">⚠️ Ausencia injustificada</option>
+                            <option value="4">🌴 Vacaciones</option>
+                        </select>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Fecha inicio</label>
+                            <input asp-for="NuevaAusencia.FechaInicio" type="date" class="form-control" />
+                            <span asp-validation-for="NuevaAusencia.FechaInicio" class="text-danger small"></span>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Fecha fin</label>
+                            <input asp-for="NuevaAusencia.FechaFin" type="date" class="form-control" />
+                            <span asp-validation-for="NuevaAusencia.FechaFin" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

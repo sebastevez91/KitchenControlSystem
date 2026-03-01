@@ -1,0 +1,333 @@
+﻿@page
+@model CocinaManager.API.Pages.Recetas.IndexModel
+@{
+    ViewData["Title"] = "Recetas y Menús";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-journal-richtext me-2"></i>Recetas y Planificación</h1>
+        <p class="text-muted mb-0">Gestión de recetas y menú semanal</p>
+    </div>
+    @if (User.IsInRole("Admin"))
+    {
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalPlanificar">
+                <i class="bi bi-calendar-week me-1"></i> Planificar Menú
+            </button>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaReceta">
+                <i class="bi bi-plus-lg me-1"></i> Nueva Receta
+            </button>
+        </div>
+    }
+</div>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Menú semanal -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-calendar-week me-2 text-primary"></i>Menú de la semana</span>
+        <span class="text-muted small">
+            @Model.InicioSemana.ToString("dd/MM") — @Model.FinSemana.ToString("dd/MM/yyyy")
+        </span>
+    </div>
+    <div class="card-body">
+        @{
+            var diasSemana = Enumerable.Range(0, 7)
+            .Select(i => Model.InicioSemana.AddDays(i)).ToList();
+            var tiposComida = new[] { "Desayuno", "Almuerzo", "Merienda", "Cena" };
+        }
+        <div class="table-responsive">
+            <table class="table table-bordered text-center mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:100px;">Comida</th>
+                        @foreach (var dia in diasSemana)
+                        {
+                            var esHoy = dia.Date == DateTime.Today;
+                            <th class="@(esHoy ? "table-primary" : "")">
+                                <div class="fw-semibold">@dia.ToString("ddd", new System.Globalization.CultureInfo("es-AR"))</div>
+                                <div class="small @(esHoy ? "text-primary fw-bold" : "text-muted")">
+                                    @dia.ToString("dd/MM")
+                                </div>
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var tipo in tiposComida)
+                    {
+                        <tr>
+                            <td class="fw-semibold text-muted small align-middle">@tipo</td>
+                            @foreach (var dia in diasSemana)
+                            {
+                                var menu = Model.MenuSemana
+                                .FirstOrDefault(m => m.Fecha.Date == dia.Date && m.TipoComida == tipo);
+                                <td class="align-middle" style="min-width:110px;">
+                                    @if (menu != null)
+                                    {
+                                        <div class="d-flex flex-column align-items-center gap-1">
+                                            <span class="badge bg-success" style="font-size:0.75rem; white-space:normal;">
+                                                @menu.NombreReceta
+                                            </span>
+                                            @if (User.IsInRole("Admin"))
+                                            {
+                                                <form method="post" asp-page-handler="EliminarPlan">
+                                                    <input type="hidden" name="id" value="@menu.Id" />
+                                                    <button type="submit" class="btn btn-link btn-sm text-danger p-0"
+                                                            style="font-size:0.7rem;">
+                                                        <i class="bi bi-x-circle"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted" style="font-size:0.75rem;">—</span>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Listado de recetas -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-journal-richtext me-2"></i>Recetas</span>
+        <span class="badge bg-primary">@Model.Recetas.Count recetas</span>
+    </div>
+    <div class="card-body">
+        @if (!Model.Recetas.Any())
+        {
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-journal-x" style="font-size:2rem;"></i>
+                <p class="mt-2">No hay recetas cargadas todavía</p>
+            </div>
+        }
+        else
+        {
+            <div class="row g-3">
+                @foreach (var r in Model.Recetas)
+                {
+                    <div class="col-md-4">
+                        <div class="card h-100 border" style="border-radius:10px;">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h6 class="fw-bold mb-1">@r.Nombre</h6>
+                                    <span class="badge bg-primary">@r.Porciones porciones</span>
+                                </div>
+                                <p class="text-muted small mb-2">@r.Descripcion</p>
+                                <hr class="my-2" />
+                                <div class="small">
+                                    <strong><i class="bi bi-list-ul me-1"></i>Ingredientes:</strong>
+                                    <ul class="list-unstyled mt-1 mb-0">
+                                        @foreach (var i in r.Ingredientes)
+                                        {
+                                            <li class="text-muted">
+                                                • @i.Nombre — @i.Cantidad @i.UnidadMedida
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <div class="card-footer bg-white border-top-0 text-end">
+                                    <form method="post" asp-page-handler="EliminarReceta"
+                                          onsubmit="return confirm('¿Eliminar @r.Nombre?')">
+                                        <input type="hidden" name="id" value="@r.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash me-1"></i>Eliminar
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal Nueva Receta -->
+<div class="modal fade" id="modalNuevaReceta" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-journal-plus me-2"></i>Nueva Receta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="CrearReceta">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Nombre</label>
+                            <input asp-for="NuevaReceta.Nombre" class="form-control"
+                                   placeholder="Ej: Milanesa napolitana" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Porciones</label>
+                            <input asp-for="NuevaReceta.Porciones" type="number"
+                                   class="form-control" placeholder="Ej: 4" min="1" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Descripción</label>
+                            <textarea asp-for="NuevaReceta.Descripcion" class="form-control"
+                                      rows="2" placeholder="Descripción o modo de preparación"></textarea>
+                        </div>
+                    </div>
+
+                    <hr />
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong><i class="bi bi-list-ul me-1"></i>Ingredientes</strong>
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                onclick="agregarIngrediente()">
+                            <i class="bi bi-plus-lg me-1"></i>Agregar
+                        </button>
+                    </div>
+
+                    <div id="listaIngredientes" class="d-flex flex-column gap-2"></div>
+                    <input type="hidden" asp-for="IngredientesJson" id="ingredientesJson" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" onclick="prepararIngredientes()">
+                        Guardar Receta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Planificar Menú -->
+<div class="modal fade" id="modalPlanificar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-calendar-week me-2"></i>Planificar Menú</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Planificar">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Fecha</label>
+                        <input asp-for="NuevoPlan.Fecha" type="date" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipo de comida</label>
+                        <select asp-for="NuevoPlan.TipoComida" class="form-select">
+                            <option value="Desayuno">🌅 Desayuno</option>
+                            <option value="Almuerzo">🍽️ Almuerzo</option>
+                            <option value="Merienda">☕ Merienda</option>
+                            <option value="Cena">🌙 Cena</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Receta</label>
+                        <select asp-for="NuevoPlan.RecetaId" class="form-select">
+                            <option value="">-- Seleccioná una receta --</option>
+                            @foreach (var r in Model.Recetas)
+                            {
+                                <option value="@r.Id">@r.Nombre (@r.Porciones porciones)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Observaciones <span class="text-muted fw-normal">(opcional)</span></label>
+                        <input asp-for="NuevoPlan.Observaciones" class="form-control"
+                               placeholder="Ej: Sin TACC, versión vegana" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Planificar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let ingredientes = [];
+
+        function agregarIngrediente() {
+            const id = Date.now();
+            const div = document.createElement('div');
+            div.className = 'row g-2 align-items-center';
+            div.id = `ing-${id}`;
+            div.innerHTML = `
+                <div class="col-5">
+                    <input type="text" class="form-control form-control-sm"
+                           placeholder="Ingrediente" onchange="actualizarIngrediente(${id})"/>
+                </div>
+                <div class="col-3">
+                    <input type="number" step="0.01" class="form-control form-control-sm"
+                           placeholder="Cant." onchange="actualizarIngrediente(${id})"/>
+                </div>
+                <div class="col-3">
+                    <input type="text" class="form-control form-control-sm"
+                           placeholder="Unidad" onchange="actualizarIngrediente(${id})"/>
+                </div>
+                <div class="col-1">
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            onclick="quitarIngrediente(${id})">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>`;
+            document.getElementById('listaIngredientes').appendChild(div);
+            ingredientes.push({ id, nombre: '', cantidad: 0, unidadMedida: '' });
+        }
+
+        function actualizarIngrediente(id) {
+            const row = document.getElementById(`ing-${id}`);
+            const inputs = row.querySelectorAll('input');
+            const idx = ingredientes.findIndex(i => i.id === id);
+            if (idx >= 0) {
+                ingredientes[idx].nombre = inputs[0].value;
+                ingredientes[idx].cantidad = parseFloat(inputs[1].value) || 0;
+                ingredientes[idx].unidadMedida = inputs[2].value;
+            }
+        }
+
+        function quitarIngrediente(id) {
+            document.getElementById(`ing-${id}`)?.remove();
+            ingredientes = ingredientes.filter(i => i.id !== id);
+        }
+
+        function prepararIngredientes() {
+            // Actualizar todos antes de enviar
+            document.querySelectorAll('#listaIngredientes .row').forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                const id = parseInt(row.id.replace('ing-', ''));
+                const idx = ingredientes.findIndex(i => i.id === id);
+                if (idx >= 0) {
+                    ingredientes[idx].nombre = inputs[0].value;
+                    ingredientes[idx].cantidad = parseFloat(inputs[1].value) || 0;
+                    ingredientes[idx].unidadMedida = inputs[2].value;
+                }
+            });
+
+            const payload = ingredientes
+                .filter(i => i.nombre.trim() !== '')
+                .map(({ nombre, cantidad, unidadMedida }) => ({ nombre, cantidad, unidadMedida }));
+
+            document.getElementById('ingredientesJson').value = JSON.stringify(payload);
+        }
+    </script>
+}

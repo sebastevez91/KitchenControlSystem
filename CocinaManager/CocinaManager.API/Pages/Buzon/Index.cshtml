@@ -1,0 +1,227 @@
+﻿@page
+@model CocinaManager.API.Pages.Buzon.IndexModel
+@{
+    ViewData["Title"] = "Buzón de Mensajes";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1>
+            <i class="bi bi-envelope me-2"></i>Buzón de Mensajes
+            @if (Model.NoLeidos > 0)
+            {
+                <span class="badge bg-danger ms-2" style="font-size:0.8rem;">@Model.NoLeidos</span>
+            }
+        </h1>
+        <p class="text-muted mb-0">Mensajes internos del sistema</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoMensaje">
+        <i class="bi bi-pencil-square me-1"></i> Nuevo Mensaje
+    </button>
+</div>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-4">
+    <!-- Sidebar buzón -->
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body p-2">
+                <a href="/Buzon?vista=recibidos"
+                   class="btn w-100 text-start mb-1 @(Model.Vista == "recibidos" ? "btn-primary" : "btn-light")">
+                    <i class="bi bi-inbox me-2"></i>Recibidos
+                    @if (Model.NoLeidos > 0)
+                    {
+                        <span class="badge bg-danger float-end">@Model.NoLeidos</span>
+                    }
+                </a>
+                <a href="/Buzon?vista=enviados"
+                   class="btn w-100 text-start @(Model.Vista == "enviados" ? "btn-primary" : "btn-light")">
+                    <i class="bi bi-send me-2"></i>Enviados
+                    <span class="badge bg-secondary float-end">@Model.Enviados.Count</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de mensajes -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header fw-semibold">
+                @if (Model.Vista == "recibidos")
+                {
+                    <i class="bi bi-inbox me-2"></i>
+                    @($"Recibidos ({Model.Recibidos.Count})")
+                }
+                else
+                {
+                    <i class="bi bi-send me-2"></i>
+                    @($"Enviados ({Model.Enviados.Count})")
+                }
+            </div>
+            <div class="card-body p-0">
+                @{
+                    var lista = Model.Vista == "recibidos" ? Model.Recibidos : Model.Enviados;
+                }
+                @if (!lista.Any())
+                {
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-envelope-open" style="font-size:2rem;"></i>
+                        <p class="mt-2 small mb-0">Sin mensajes</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var m in lista)
+                    {
+                        var esActivo = Model.MensajeDetalle?.Id == m.Id;
+                        <a href="/Buzon?vista=@Model.Vista&id=@m.Id"
+                           class="d-block p-3 border-bottom text-decoration-none
+                                          @(esActivo ? "bg-primary bg-opacity-10" : "")
+                                          @(!m.Leido && Model.Vista == "recibidos" ? "bg-light" : "")">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="fw-semibold text-dark" style="font-size:0.85rem;">
+                                    @if (!m.Leido && Model.Vista == "recibidos")
+                                    {
+                                        <span class="badge bg-primary me-1" style="font-size:0.6rem;">NUEVO</span>
+                                    }
+                                    @(Model.Vista == "recibidos" ? m.Remitente : m.Destinatario)
+                                </div>
+                                <small class="text-muted">@m.FechaEnvio.ToString("dd/MM HH:mm")</small>
+                            </div>
+                            <div class="text-dark" style="font-size:0.85rem;">@m.Asunto</div>
+                            <div class="text-muted" style="font-size:0.75rem;">
+                                @(m.Cuerpo.Length > 50 ? m.Cuerpo[..50] + "..." : m.Cuerpo)
+                            </div>
+                        </a>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Detalle del mensaje -->
+    <div class="col-md-5">
+        @if (Model.MensajeDetalle != null)
+        {
+            var msg = Model.MensajeDetalle;
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">@msg.Asunto</span>
+                    <form method="post" asp-page-handler="Eliminar">
+                        <input type="hidden" name="id" value="@msg.Id" />
+                        <input type="hidden" name="vista" value="@Model.Vista" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('¿Eliminar este mensaje?')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <div>
+                            <div class="small text-muted">De</div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-circle avatar-sm">
+                                    @msg.Remitente[..Math.Min(2, msg.Remitente.Length)].ToUpper()
+                                </div>
+                                <span class="fw-semibold">@msg.Remitente</span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-muted">Para</div>
+                            <span class="fw-semibold">@msg.Destinatario</span>
+                        </div>
+                    </div>
+                    <div class="small text-muted mb-3">
+                        <i class="bi bi-clock me-1"></i>
+                        @msg.FechaEnvio.ToString("dd/MM/yyyy HH:mm")
+                        @if (msg.MensajePadreId.HasValue)
+                        {
+                            <span class="ms-2 badge bg-secondary">Respuesta</span>
+                        }
+                    </div>
+                    <hr />
+                    <p style="white-space: pre-wrap;">@msg.Cuerpo</p>
+                </div>
+
+                <!-- Responder -->
+                @if (Model.Vista == "recibidos")
+                {
+                    <div class="card-footer bg-white">
+                        <form method="post" asp-page-handler="Responder">
+                            <input type="hidden" name="mensajePadreId" value="@msg.Id" />
+                            <div class="mb-2">
+                                <textarea name="cuerpoRespuesta" class="form-control form-control-sm"
+                                  rows="3" placeholder="Escribí tu respuesta..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary w-100">
+                                <i class="bi bi-reply me-1"></i>Responder
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="card">
+                <div class="card-body text-center text-muted py-5">
+                    <i class="bi bi-envelope-open" style="font-size:3rem;"></i>
+                    <p class="mt-3 mb-0">Seleccioná un mensaje para verlo</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal Nuevo Mensaje -->
+<div class="modal fade" id="modalNuevoMensaje" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Nuevo Mensaje</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Enviar">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Para</label>
+                        <select asp-for="NuevoMensaje.Destinatario" class="form-select">
+                            <option value="">-- Seleccioná un usuario --</option>
+                            @foreach (var u in Model.Usuarios)
+                            {
+                                <option value="@u">@u</option>
+                            }
+                        </select>
+                        <span asp-validation-for="NuevoMensaje.Destinatario" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Asunto</label>
+                        <input asp-for="NuevoMensaje.Asunto" class="form-control"
+                               placeholder="Asunto del mensaje" />
+                        <span asp-validation-for="NuevoMensaje.Asunto" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mensaje</label>
+                        <textarea asp-for="NuevoMensaje.Cuerpo" class="form-control" rows="5"
+                                  placeholder="Escribí tu mensaje..."></textarea>
+                        <span asp-validation-for="NuevoMensaje.Cuerpo" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-1"></i>Enviar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

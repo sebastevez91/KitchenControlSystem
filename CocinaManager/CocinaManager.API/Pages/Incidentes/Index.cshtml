@@ -1,0 +1,272 @@
+﻿@page
+@model CocinaManager.API.Pages.Incidentes.IndexModel
+@using CocinaManager.Domain.Enums
+@{
+    ViewData["Title"] = "Incidentes";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-exclamation-octagon me-2"></i>Registro de Incidentes</h1>
+        <p class="text-muted mb-0">Novedades y eventos del día</p>
+    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoIncidente">
+        <i class="bi bi-plus-lg me-1"></i> Reportar Incidente
+    </button>
+</div>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div style="font-size:2rem; font-weight:700;">@Model.TotalAbiertos</div>
+                    <div style="opacity:0.85;">Incidentes abiertos</div>
+                </div>
+                <i class="bi bi-exclamation-triangle-fill" style="font-size:2.5rem; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div style="font-size:2rem; font-weight:700;">@Model.TotalResueltos</div>
+                    <div style="opacity:0.85;">Resueltos</div>
+                </div>
+                <i class="bi bi-check-circle-fill" style="font-size:2.5rem; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div style="font-size:2rem; font-weight:700;">@Model.Incidentes.Count</div>
+                    <div style="opacity:0.85;">Total registrados</div>
+                </div>
+                <i class="bi bi-journal-text" style="font-size:2.5rem; opacity:0.4;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-list-ul me-2"></i>Historial de incidentes</span>
+        <span class="badge bg-primary">@Model.Incidentes.Count registros</span>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Incidentes.Any())
+        {
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-shield-check" style="font-size:3rem; color:#28a745;"></i>
+                <p class="mt-2 mb-0 fw-semibold">Sin incidentes registrados</p>
+                <p class="small">Todo en orden por ahora.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Descripción</th>
+                            <th>Registrado por</th>
+                            <th>Estado</th>
+                            <th>Resolución</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var i in Model.Incidentes)
+                        {
+                            <tr>
+                                <td class="text-muted small">
+                                    @i.FechaRegistro.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+                                <td>
+                                    @{
+                                        var tipoColor = i.Tipo switch
+                                        {
+                                            TipoIncidente.Accidente => "danger",
+                                            TipoIncidente.Robo => "dark",
+                                            TipoIncidente.Daño => "warning",
+                                            TipoIncidente.Otro => "secondary",
+                                            _ => "secondary"
+                                        };
+                                        var tipoIcon = i.Tipo switch
+                                        {
+                                            TipoIncidente.Accidente => "bi-bandaid",
+                                            TipoIncidente.Robo => "bi-shield-exclamation",
+                                            TipoIncidente.Daño => "bi-hammer",
+                                            TipoIncidente.Otro => "bi-three-dots",
+                                            _ => "bi-question"
+                                        };
+                                    }
+                                <span class="badge bg-@tipoColor badge-estado">
+                                    <i class="bi @tipoIcon me-1"></i>@i.Tipo
+                                </span>
+                            </td>
+                            <td style="max-width:280px;">
+                                @(i.Descripcion.Length > 80
+                                                            ? i.Descripcion[..80] + "..."
+                                                            : i.Descripcion)
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar-circle avatar-sm">
+                                            @i.RegistradoPor[..Math.Min(2, i.RegistradoPor.Length)].ToUpper()
+                                        </div>
+                                        @i.RegistradoPor
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (i.Estado == EstadoIncidente.Abierto)
+                                    {
+                                        <span class="badge bg-danger badge-estado">
+                                            <i class="bi bi-circle-fill me-1" style="font-size:0.5rem;"></i>Abierto
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success badge-estado">
+                                            <i class="bi bi-check-circle me-1"></i>Resuelto
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-muted small">
+                                    @if (i.FechaResolucion.HasValue)
+                                    {
+                                        @i.FechaResolucion.Value.ToString("dd/MM/yyyy")
+                                        if (!string.IsNullOrEmpty(i.Observaciones))
+                                        {
+                                            <br />
+                            
+                                            <span class="fst-italic">@i.Observaciones</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span>—</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (i.Estado == EstadoIncidente.Abierto)
+                                    {
+                                        <button class="btn btn-sm btn-success"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#modalResolver"
+                                                data-id="@i.Id"
+                                                title="Marcar como resuelto">
+                                            <i class="bi bi-check-circle"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal Nuevo Incidente -->
+<div class="modal fade" id="modalNuevoIncidente" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-octagon me-2 text-danger"></i>Reportar Incidente
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Crear">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipo de incidente</label>
+                        <select asp-for="NuevoIncidente.Tipo" class="form-select">
+                            <option value="1">🩹 Accidente</option>
+                            <option value="2">🛡️ Robo</option>
+                            <option value="3">🔨 Daño</option>
+                            <option value="4">📋 Otro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Descripción</label>
+                        <textarea asp-for="NuevoIncidente.Descripcion" class="form-control"
+                                  rows="4" placeholder="Describí el incidente con el mayor detalle posible"></textarea>
+                        <span asp-validation-for="NuevoIncidente.Descripcion" class="text-danger small"></span>
+                    </div>
+                    <div class="alert alert-info d-flex gap-2 mb-0 py-2">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <small>El incidente quedará registrado a tu nombre: <strong>@User.Identity?.Name</strong></small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-exclamation-triangle me-1"></i>Reportar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Resolver -->
+<div class="modal fade" id="modalResolver" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-check-circle me-2 text-success"></i>Resolver Incidente
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Resolver">
+                <input type="hidden" id="incidenteId" name="id" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Observaciones <span class="text-muted fw-normal">(opcional)</span>
+                        </label>
+                        <textarea name="observaciones" class="form-control" rows="3"
+                                  placeholder="Describí cómo se resolvió el incidente"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Marcar como resuelto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Pasar el ID al modal de resolver
+        document.getElementById('modalResolver').addEventListener('show.bs.modal', function (e) {
+            const id = e.relatedTarget.getAttribute('data-id');
+            document.getElementById('incidenteId').value = id;
+        });
+    </script>
+}
