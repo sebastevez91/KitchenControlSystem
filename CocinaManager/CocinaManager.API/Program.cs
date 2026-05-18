@@ -1,4 +1,4 @@
-using CocinaManager.API.Middleware;
+﻿using CocinaManager.API.Middleware;
 using CocinaManager.Application.Interfaces;
 using CocinaManager.Application.Services;
 using CocinaManager.Domain.Entities;
@@ -75,6 +75,7 @@ if (app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapGet("/api-docs", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 app.MapFallbackToPage("/Index");
 app.MapControllers();

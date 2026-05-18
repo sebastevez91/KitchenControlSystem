@@ -12,6 +12,7 @@
     <title>Login — CocinaManager</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="/img/logo-CM-TR.png" />
     <style>
         body {
             min-height: 100vh;
@@ -30,7 +31,7 @@
         }
 
         .login-header {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #224aff, #000000);
             border-radius: 16px 16px 0 0;
             padding: 32px;
             text-align: center;
@@ -66,7 +67,7 @@
         }
 
         .btn-login {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #224aff, #000000);
             border: none;
             color: white;
             font-weight: 600;
@@ -84,9 +85,10 @@
 <body>
     <div class="login-card">
         <div class="login-header">
-            <i class="bi bi-grid-fill d-block"></i>
-            <h1>CocinaManager</h1>
-            <p>Sistema de gestión de cocina</p>
+            <img src="/img/logo-CM-TR.png" alt="CocinaManager"
+                 style="height:160px; width:auto; margin-bottom:5px;" />
+                 <h3>Cocina Manager</h3>
+            <p style="opacity:0.9; margin:0;">Sistema de gestión de cocina</p>
         </div>
         <div class="login-body">
             @if (Model.Error != null)

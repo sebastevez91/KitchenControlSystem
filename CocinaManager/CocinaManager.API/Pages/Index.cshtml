@@ -18,7 +18,7 @@
         </p>
     </div>
     <!-- Avatar -->
-    <div
+    <div>
         
     </div>
 </div>
@@ -121,14 +121,14 @@
                                             @{
                                                 var turnoColor = t.TipoTurno.ToString() switch
                                                 {
-                                                    "Manana" => "warning",
+                                                    "Mañana" => "warning",
                                                     "Tarde" => "info",
                                                     "Noche" => "dark",
                                                     _ => "secondary"
                                                 };
                                                 var turnoIcon = t.TipoTurno.ToString() switch
                                                 {
-                                                    "Manana" => "bi-sunrise",
+                                                    "Mañana" => "bi-sunrise",
                                                     "Tarde" => "bi-sun",
                                                     "Noche" => "bi-moon-stars",
                                                     _ => "bi-clock"
