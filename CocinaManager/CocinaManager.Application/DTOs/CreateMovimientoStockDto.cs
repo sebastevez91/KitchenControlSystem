@@ -16,4 +16,6 @@ public class CreateMovimientoStockDto
 
     [MaxLength(500, ErrorMessage = "La observación no puede superar 500 caracteres.")]
     public string? Observacion { get; set; }
+
+    public DateTime Fecha { get; set; } = DateTime.UtcNow;
 }

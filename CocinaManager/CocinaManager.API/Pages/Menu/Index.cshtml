@@ -1,0 +1,264 @@
+﻿@page
+@model CocinaManager.API.Pages.Menu.MenuSemanalModel
+@using CocinaManager.Domain.Enums
+@{
+    ViewData["Title"] = "Menú Dest RPO";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Menú De la Cocina Destacamento RPO</h2>
+    <div class="d-flex gap-2">
+        <a asp-page="/Recetas/Index" class="btn btn-outline-primary">
+            <i class="bi bi-book"></i> Ver Recetas
+        </a>
+        <a href="/api/menu/semana/pdf" class="btn btn-outline-danger" target="_blank">
+            <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
+        </a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle text-center">
+        <thead class="table-dark">
+            <tr>
+                <th style="min-width:110px;">Comida</th>
+                @foreach (var dia in Model.MenuSemanal.Dias)
+                {
+                    <th>
+                        <div>@dia.DiaSemana</div>
+                        <small class="text-warning fw-normal">@dia.Fecha.ToString("dd/MM")</small>
+                    </th>
+                }
+            </tr>
+            <!-- Fila de comensales -->
+            <tr class="table-secondary">
+                <td class="fw-semibold text-start ps-2">
+                    <i class="bi bi-people"></i> Comensales
+                </td>
+                @foreach (var dia in Model.MenuSemanal.Dias)
+                {
+                    <td>
+                        <form method="post" asp-page-handler="Comensales" class="d-flex gap-1 justify-content-center">
+                            <input type="hidden" name="fecha" value="@dia.Fecha.ToString("yyyy-MM-dd")" />
+                            <input type="number" name="cantidad" min="0"
+                                   value="@(dia.CantidadComensales?.ToString() ?? "")"
+                                   placeholder="-"
+                                   class="form-control form-control-sm text-center"
+                                   style="width:70px;" />
+                            <button type="submit" class="btn btn-sm btn-outline-light" title="Guardar">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                        </form>
+                    </td>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var tipo in MenuSemanalModel.OrdenComidas)
+            {
+                <tr>
+                    <td class="fw-semibold text-start ps-2 table-light">@tipo</td>
+                    @foreach (var dia in Model.MenuSemanal.Dias)
+                    {
+                        var comida = dia.Comidas.FirstOrDefault(c => c.TipoMenu == tipo);
+                        bool esDoble = tipo == TipoMenu.Almuerzo || tipo == TipoMenu.Cena;
+
+                        if (esDoble)
+                        {
+                            var entrada = comida?.Recetas.FirstOrDefault(r => r.Rol == RolPlato.Entrada);
+                            var principal = comida?.Recetas.FirstOrDefault(r => r.Rol == RolPlato.PlatoPrincipal);
+
+                            <td style="min-width: 140px; padding: 4px;">
+                                <div class="celda-menu border-bottom pb-1 mb-1"
+                                     data-dia="@((int)dia.DiaSemana)"
+                                     data-tipo="@((int)tipo)"
+                                     data-rol="@((int)RolPlato.Entrada)"
+                                     data-dia-nombre="@dia.DiaSemana"
+                                     data-tipo-nombre="@tipo — Entrada"
+                                     data-receta-id="@(entrada?.RecetaId)"
+                                     style="cursor:pointer;"
+                                     title="Click para asignar entrada">
+                                    <small class="text-muted d-block" style="font-size:0.65rem;">Entrada</small>
+                                    @if (entrada != null)
+                                    {
+                                        <span class="badge bg-info text-dark d-block">@(entrada.RecetaNombre ?? "Sin nombre")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted fst-italic" style="font-size:0.8rem;">— asignar</span>
+                                    }
+                                </div>
+                                <div class="celda-menu"
+                                     data-dia="@((int)dia.DiaSemana)"
+                                     data-tipo="@((int)tipo)"
+                                     data-rol="@((int)RolPlato.PlatoPrincipal)"
+                                     data-dia-nombre="@dia.DiaSemana"
+                                     data-tipo-nombre="@tipo — Plato principal"
+                                     data-receta-id="@(principal?.RecetaId)"
+                                     style="cursor:pointer;"
+                                     title="Click para asignar plato principal">
+                                    <small class="text-muted d-block" style="font-size:0.65rem;">Plato principal</small>
+                                    @if (principal != null)
+                                    {
+                                        <span class="badge bg-primary d-block">@(principal.RecetaNombre ?? "Sin nombre")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted fst-italic" style="font-size:0.8rem;">— asignar</span>
+                                    }
+                                </div>
+                            </td>
+                        }
+                        else
+                        {
+                            var receta = comida?.Recetas.FirstOrDefault();
+                            <td class="celda-menu"
+                                data-dia="@((int)dia.DiaSemana)"
+                                data-tipo="@((int)tipo)"
+                                data-rol=""
+                                data-dia-nombre="@dia.DiaSemana"
+                                data-tipo-nombre="@tipo"
+                                data-receta-id="@(receta?.RecetaId)"
+                                style="cursor:pointer; min-width: 120px;"
+                                title="Click para asignar receta">
+                                @if (receta != null)
+                                {
+                                    <span class="badge bg-primary d-block mb-1">@(receta.RecetaNombre ?? "Sin nombre")</span>
+                                    <small class="text-muted" style="font-size:0.7rem;">click para cambiar</small>
+                                }
+                                else
+                                {
+                                    <span class="text-muted fst-italic">— asignar</span>
+                                }
+                            </td>
+                        }
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+    @* Modal — poné esto justo antes del cierre del @section Scripts o al final del body *@
+    <div class="modal fade" id="modalReceta" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        Asignar receta — <span id="modalSubtitulo" class="text-muted fw-normal"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="buscadorReceta" class="form-control mb-3" placeholder="Buscar receta..." />
+                    <div id="listaRecetas" class="list-group">
+                        <div class="text-center text-muted py-3">Cargando...</div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button id="btnLimpiarCelda" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-trash"></i> Quitar receta
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+            let celdaActual = null;
+            let todasLasRecetas = [];
+
+            // Cargar recetas una sola vez al abrir la página
+            fetch('/api/menu/recetas-disponibles')
+                .then(r => r.json())
+                .then(data => { todasLasRecetas = data; });
+
+            // Click en cualquier celda
+            document.querySelectorAll('.celda-menu').forEach(celda => {
+                celda.addEventListener('click', () => {
+                    celdaActual = celda;
+                    document.getElementById('modalSubtitulo').textContent =
+                        `${celda.dataset.diaNombre} – ${celda.dataset.tipoNombre}`;
+                    document.getElementById('buscadorReceta').value = '';
+                    renderizarLista(todasLasRecetas);
+                    new bootstrap.Modal(document.getElementById('modalReceta')).show();
+                });
+            });
+
+            // Buscador en tiempo real
+            document.getElementById('buscadorReceta').addEventListener('input', function () {
+                const filtro = this.value.toLowerCase();
+                const filtradas = todasLasRecetas.filter(r => r.nombre.toLowerCase().includes(filtro));
+                renderizarLista(filtradas);
+            });
+
+            function renderizarLista(recetas) {
+                const lista = document.getElementById('listaRecetas');
+                if (recetas.length === 0) {
+                    lista.innerHTML = '<div class="text-center text-muted py-3">Sin resultados</div>';
+                    return;
+                }
+                lista.innerHTML = recetas.map(r => `
+                    <button class="list-group-item list-group-item-action" onclick="elegirReceta('${r.id}', '${r.nombre}')">
+                        ${r.nombre}
+                    </button>
+                `).join('');
+            }
+
+            function elegirReceta(recetaId, nombre) {
+                if (!celdaActual) return;
+
+                const rol = celdaActual.dataset.rol ? parseInt(celdaActual.dataset.rol) : null;
+
+                fetch('/api/menu/celda', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        diaSemana: parseInt(celdaActual.dataset.dia),
+                        tipoMenu: parseInt(celdaActual.dataset.tipo),
+                        recetaId: recetaId,
+                        rol: rol
+                    })
+                })
+                .then(r => {
+                    if (r.ok) {
+                        const esDoble = celdaActual.dataset.rol !== '';
+                        const etiqueta = esDoble
+                            ? `<small class="text-muted d-block" style="font-size:0.65rem;">${rol === 1 ? 'Entrada' : 'Plato principal'}</small>`
+                            : '';
+                        const badgeClass = esDoble && rol === 1 ? 'bg-info text-dark' : 'bg-primary';
+                        const pie = esDoble ? '' : '<small class="text-muted" style="font-size:0.7rem;">click para cambiar</small>';
+
+                        celdaActual.innerHTML = `${etiqueta}<span class="badge ${badgeClass} d-block mb-1">${nombre}</span>${pie}`;
+                        celdaActual.dataset.recetaId = recetaId;
+                        bootstrap.Modal.getInstance(document.getElementById('modalReceta')).hide();
+                    } else {
+                        alert('Error al guardar la receta.');
+                    }
+                });
+            }
+
+            document.getElementById('btnLimpiarCelda').addEventListener('click', () => {
+                if (!celdaActual) return;
+
+                const rol = celdaActual.dataset.rol ? parseInt(celdaActual.dataset.rol) : null;
+                const rolQuery = rol !== null ? `&rol=${rol}` : '';
+
+                fetch(`/api/menu/celda?diaSemana=${celdaActual.dataset.dia}&tipoMenu=${celdaActual.dataset.tipo}${rolQuery}`, {
+                    method: 'DELETE'
+                })
+                .then(r => {
+                    if (r.ok) {
+                        const esDoble = celdaActual.dataset.rol !== '';
+                        const etiqueta = esDoble
+                            ? `<small class="text-muted d-block" style="font-size:0.65rem;">${rol === 1 ? 'Entrada' : 'Plato principal'}</small>`
+                            : '';
+                        celdaActual.innerHTML = `${etiqueta}<span class="text-muted fst-italic" style="font-size:0.8rem;">— asignar</span>`;
+                        celdaActual.dataset.recetaId = '';
+                        bootstrap.Modal.getInstance(document.getElementById('modalReceta')).hide();
+                    }
+                });
+            });
+        </script>
+    }
+</div>

@@ -6,15 +6,23 @@
 
 <!-- Bienvenida -->
 <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
-    <div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #0d6efd, #000); width: stretch;">
         <h1 class="mb-1">
-            👋 Bienvenido, <span style="color:#667eea;">@Model.NombreUsuario</span>
+            👋 Bienvenido, <span style="color:#f8f9fa;">@Model.NombreUsuario</span>
         </h1>
-        <p class="text-muted mb-0">
+        <p class="mb-0" style="color: white;">
             <i class="bi bi-calendar3 me-1"></i>
             @Model.FechaHoy.ToString("dddd, dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-AR"))
             &nbsp;·&nbsp;
-            <span class="badge" style="background-color:#764ba2;">@Model.RolUsuario</span>
+            @if(Model.RolUsuario == "Admin")
+            {
+                <span class="badge" style="background-color:#dc3545;">Administrador</span>
+            }
+            else
+            {
+                <span class="badge" style="background-color:#764ba2;">Operador</span>
+            }
+
         </p>
     </div>
     <!-- Avatar -->
@@ -26,7 +34,7 @@
 <!-- Stats -->
 <div class="row g-4 mb-4">
     <div class="col-md-3">
-        <div class="stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+        <div class="stat-card" style="background: linear-gradient(135deg, #0d6efd, #000);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <div style="font-size:2rem; font-weight:700;">@Model.TotalPersonal</div>
@@ -37,7 +45,7 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+        <div class="stat-card" style="background: linear-gradient(135deg, #0d6efd, #000);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <div style="font-size:2rem; font-weight:700;">@Model.ProductosStockBajo</div>
@@ -48,7 +56,7 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+        <div class="stat-card" style="background: linear-gradient(135deg, #0d6efd, #000);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <div style="font-size:2rem; font-weight:700;">@Model.HerramientasEnReparacion</div>
@@ -59,7 +67,7 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="stat-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
+        <div class="stat-card" style="background: linear-gradient(135deg, #0d6efd, #000);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <div style="font-size:2rem; font-weight:700;">@Model.OrdenesPendientes.Count</div>
@@ -70,7 +78,7 @@
         </div>
     </div>
     <div class="col-md-3">
-        <div class="stat-card" style="background: linear-gradient(135deg, #f5576c, #f093fb);">
+        <div class="stat-card" style="background: linear-gradient(135deg, #0d6efd, #000);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <div style="font-size:2rem; font-weight:700;">@Model.IncidentesAbiertos</div>
@@ -269,7 +277,7 @@
                     </div>
                     <div class="col-md-4">
                         <a href="/Mantenimiento" class="btn btn-outline-info w-100 py-3">
-                            <i class="bi bi-wrench-fill d-block mb-1" style="font-size:1.5rem;"></i>
+                            <i class="bi bi-wrench-adjustable-circle-fill d-block mb-1" style="font-size:1.5rem;"></i>
                             Gestionar Mantenimiento
                         </a>
                     </div>
@@ -278,4 +286,152 @@
         </div>
     </div>
 
+    <!-- Sección: Calcular víveres para el día -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-basket-fill me-2 text-success"></i>Calcular víveres</span>
+                <small class="text-muted">Comprueba cantidades necesarias y disponibilidad en depósito</small>
+            </div>
+            <div class="card-body">
+                <form id="formViveres" class="row g-2 align-items-end">
+                    <div class="col-auto">
+                        <label class="form-label mb-0 small">Fecha</label>
+                        <input id="vFecha" type="date" class="form-control" value="@Model.FechaHoy.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-auto">
+                        <label class="form-label mb-0 small">Comensales</label>
+                        <input id="vComensales" type="number" min="1" class="form-control" value="35" />
+                    </div>
+                    <div class="col-auto">
+                        <button id="btnCalcularViveres" type="button" class="btn btn-primary">
+                            <i class="bi bi-calculator me-1"></i> Calcular
+                        </button>
+                    </div>
+                    <div class="col-auto">
+                        <div id="vLoading" class="spinner-border text-primary" role="status" style="display:none; width:1.6rem; height:1.6rem;">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div id="vMensaje" class="text-muted small"></div>
+                    </div>
+                </form>
+
+                <div id="vResultado" class="table-responsive mt-3" style="display:none;">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Ingrediente</th>
+                                <th class="text-end">Cantidad necesaria</th>
+                                <th>Unidad</th>
+                                <th class="text-end">Stock actual</th>
+                                <th class="text-end">Stock mínimo</th>
+                                <th>Disponibilidad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vResultadoBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const btn = document.getElementById('btnCalcularViveres');
+            const fechaInput = document.getElementById('vFecha');
+            const comensalesInput = document.getElementById('vComensales');
+            const loading = document.getElementById('vLoading');
+            const mensaje = document.getElementById('vMensaje');
+            const resultado = document.getElementById('vResultado');
+            const resultadoBody = document.getElementById('vResultadoBody');
+
+            btn.addEventListener('click', async () => {
+                resultado.style.display = 'none';
+                resultadoBody.innerHTML = '';
+                mensaje.textContent = '';
+                const fecha = fechaInput.value;
+                const comensales = parseInt(comensalesInput.value, 10) || 35;
+
+                if (!fecha) {
+                    mensaje.textContent = 'Seleccione una fecha válida.';
+                    return;
+                }
+
+                loading.style.display = 'inline-block';
+                btn.disabled = true;
+
+                try {
+                    // Llamada a la API (usa cookies de autenticación)
+                    const url = `/api/reportes/viveres-dia?fecha=${encodeURIComponent(fecha)}&comensales=${comensales}`;
+                    const resp = await fetch(url, { credentials: 'include' });
+
+                    if (!resp.ok) {
+                        const text = await resp.text();
+                        mensaje.textContent = `Error: ${resp.status} ${resp.statusText} ${text ? '- ' + text : ''}`;
+                        return;
+                    }
+
+                    const data = await resp.json();
+
+                    if (!data || !data.items || data.items.length === 0) {
+                        mensaje.textContent = 'No hay recetas planificadas para esa fecha o no se encontraron ingredientes.';
+                        return;
+                    }
+
+                    // Poblar tabla
+                    for (const it of data.items) {
+                        const tr = document.createElement('tr');
+
+                        const tdNombre = document.createElement('td');
+                        tdNombre.textContent = it.nombre;
+                        tdNombre.className = 'align-middle fw-semibold';
+                        tr.appendChild(tdNombre);
+
+                        const tdCant = document.createElement('td');
+                        tdCant.textContent = (it.cantidadNecesaria ?? 0).toLocaleString();
+                        tdCant.className = 'text-end align-middle';
+                        tr.appendChild(tdCant);
+
+                        const tdUnidad = document.createElement('td');
+                        tdUnidad.textContent = it.unidadMedida ?? '';
+                        tdUnidad.className = 'align-middle';
+                        tr.appendChild(tdUnidad);
+
+                        const tdStock = document.createElement('td');
+                        tdStock.textContent = (it.stockActual ?? 0).toLocaleString();
+                        tdStock.className = 'text-end align-middle';
+                        tr.appendChild(tdStock);
+
+                        const tdMin = document.createElement('td');
+                        tdMin.textContent = (it.stockMinimo ?? 0).toLocaleString();
+                        tdMin.className = 'text-end align-middle';
+                        tr.appendChild(tdMin);
+
+                        const tdDisp = document.createElement('td');
+                        const badge = document.createElement('span');
+                        badge.className = it.disponible ? 'badge bg-success' : 'badge bg-danger';
+                        badge.textContent = it.disponible ? 'Disponible' : 'No disponible';
+                        tdDisp.appendChild(badge);
+                        tdDisp.className = 'align-middle';
+                        tr.appendChild(tdDisp);
+
+                        resultadoBody.appendChild(tr);
+                    }
+
+                    resultado.style.display = 'block';
+                } catch (err) {
+                    console.error(err);
+                    mensaje.textContent = 'Error al calcular. Revisa la consola del navegador.';
+                } finally {
+                    loading.style.display = 'none';
+                    btn.disabled = false;
+                }
+            });
+        })();
+    </script>
+}

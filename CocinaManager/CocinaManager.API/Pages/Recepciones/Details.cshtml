@@ -1,0 +1,42 @@
+﻿@page "{id:guid}"
+@model CocinaManager.API.Pages.Recepciones.DetailsModel
+@{
+    ViewData["Title"] = "Detalle de Recepción";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h4>Recepción - @Model.Recepcion?.Fecha.ToString("dd/MM/yyyy HH:mm")</h4>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Proveedor</dt><dd class="col-sm-9">@Model.Recepcion?.Proveedor</dd>
+            <dt class="col-sm-3">Remito</dt><dd class="col-sm-9">@Model.Recepcion?.Remito</dd>
+            <dt class="col-sm-3">Recibido por</dt><dd class="col-sm-9">@Model.Recepcion?.RecibidoPor (@Model.Recepcion?.DniRecibidoPor)</dd>
+            <dt class="col-sm-3">Observaciones</dt><dd class="col-sm-9">@Model.Recepcion?.Observaciones</dd>
+        </dl>
+
+        <h5 class="mt-3">Líneas</h5>
+        <table class="table table-sm">
+            <thead>
+                <tr><th>Producto</th><th class="text-end">Cantidad</th><th>Unidad</th><th>Observación</th></tr>
+            </thead>
+            <tbody>
+                @foreach(var l in Model.Recepcion?.Lineas ?? Enumerable.Empty<CocinaManager.Application.DTOs.RecepcionViveresLineaDto>())
+                {
+                    <tr>
+                        <td>@l.NombreProducto</td>
+                        <td class="text-end">@l.Cantidad</td>
+                        <td>@l.Unidad</td>
+                        <td class="text-muted">@l.Observacion</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="mt-3">
+            <a class="btn btn-outline-success" asp-page="/Recepciones/Index">Volver</a>
+            <a class="btn btn-primary" asp-page="/Recepciones/Index" asp-page-handler="Download" asp-route-id="@Model.Recepcion?.Id">Descargar PDF</a>
+        </div>
+    </div>
+</div>

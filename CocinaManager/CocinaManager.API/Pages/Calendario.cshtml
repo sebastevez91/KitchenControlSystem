@@ -4,10 +4,10 @@
     ViewData["Title"] = "Calendario de Turnos";
 }
 
-<div class="page-header d-flex justify-content-between align-items-center">
-    <div>
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div class="stat-card text-white" style="background: linear-gradient(135deg, #0d6efd, #000); width: stretch;">
         <h1><i class="bi bi-calendar3 me-2"></i>Calendario de Turnos</h1>
-        <p class="text-muted mb-0">Vista mensual — hacé click en un día para asignar turno</p>
+        <p class="mb-0">Vista mensual — hacé click en un día para asignar turno</p>
     </div>
 </div>
 
@@ -23,15 +23,19 @@
 <div class="d-flex gap-3 mb-3 flex-wrap">
     <span class="d-flex align-items-center gap-2">
         <span style="width:14px;height:14px;border-radius:3px;background:#f7971e;display:inline-block;"></span>
-        <small class="text-muted">Mañana</small>
+        <small class="text-white">Mañana</small>
     </span>
     <span class="d-flex align-items-center gap-2">
         <span style="width:14px;height:14px;border-radius:3px;background:#4facfe;display:inline-block;"></span>
-        <small class="text-muted">Tarde</small>
+        <small class="text-white">Tarde</small>
     </span>
     <span class="d-flex align-items-center gap-2">
         <span style="width:14px;height:14px;border-radius:3px;background:#1a1a2e;display:inline-block;"></span>
-        <small class="text-muted">Noche</small>
+        <small class="text-white">Noche</small>
+    </span>
+    <span class="d-flex align-items-center gap-2">
+        <span style="width:14px;height:14px;border-radius:3px;background:#198754;display:inline-block;"></span>
+        <small class="text-white">Turno Completo</small>
     </span>
 </div>
 
@@ -72,6 +76,7 @@
                             <option value="1">🌅 Mañana</option>
                             <option value="2">☀️ Tarde</option>
                             <option value="3">🌙 Noche</option>
+                            <option value="4">Turno Completo</option>
                         </select>
                     </div>
                 </div>

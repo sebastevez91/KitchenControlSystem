@@ -1,6 +1,12 @@
 ﻿using ClosedXML.Excel;
+using CocinaManager.Application.DTOs;
 using CocinaManager.Application.Interfaces;
+using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CocinaManager.Application.Services;
 
@@ -10,17 +16,20 @@ public class ReporteService : IReporteService
     private readonly ITurnoService _turnoService;
     private readonly IProductoService _productoService;
     private readonly IMovimientoStockService _movimientoService;
+    private readonly IRecetaService _recetaService;
 
     public ReporteService(
         IPersonalService personalService,
         ITurnoService turnoService,
         IProductoService productoService,
-        IMovimientoStockService movimientoService)
+        IMovimientoStockService movimientoService,
+        IRecetaService recetaService)
     {
         _personalService = personalService;
         _turnoService = turnoService;
         _productoService = productoService;
         _movimientoService = movimientoService;
+        _recetaService = recetaService;
     }
 
     public async Task<byte[]> ExportarPersonalAsync()
@@ -261,6 +270,93 @@ public class ReporteService : IReporteService
         return ToBytes(wb);
     }
 
+    // Nuevo método que calcula viveres y verifica stock
+    public async Task<ViveresResultadoDto> CalcularViveresAsync(DateTime fecha, int comensales = 35)
+    {
+        var resultado = new ViveresResultadoDto
+        {
+            Fecha = fecha.Date,
+            Comensales = comensales
+        };
+
+        // Obtener planes del día
+        //var planes = await _planMenuService.GetByFechaAsync(fecha);
+        //if (planes == null || !planes.Any())
+            //return resultado; // sin recetas para la fecha
+
+        // Cargar todos los productos una vez para consulta de stock
+        var productos = await _productoService.GetAllAsync();
+
+        // Acumular requerimientos por ingrediente (nombre + unidad)
+        var acumulado = new Dictionary<string, (string Unidad, decimal Cantidad)>(StringComparer.OrdinalIgnoreCase);
+        /*
+        foreach (var plan in planes)
+        {
+            // Guardar nombre de receta en resultado
+            if (!string.IsNullOrWhiteSpace(plan.NombreReceta) && !resultado.Recetas.Contains(plan.NombreReceta))
+                resultado.Recetas.Add(plan.NombreReceta);
+
+            // Obtener receta completa
+            var receta = await _recetaService.GetByIdAsync(plan.RecetaId);
+            if (receta == null || receta.Ingredientes == null || !receta.Ingredientes.Any())
+                continue;
+
+            var factor = receta.Porciones > 0 ? (decimal)comensales / receta.Porciones : 1m;
+
+            foreach (var ing in receta.Ingredientes)
+            {
+                var clave = $"{ing.Nombre.Trim().ToLowerInvariant()}|{ing.UnidadMedida?.Trim().ToLowerInvariant()}";
+                var cantidadNecesaria = Math.Round(ing.Cantidad * factor, 2);
+
+                if (acumulado.ContainsKey(clave))
+                {
+                    var existing = acumulado[clave];
+                    acumulado[clave] = (existing.Unidad, existing.Cantidad + cantidadNecesaria);
+                }
+                else
+                {
+                    acumulado[clave] = (ing.UnidadMedida ?? string.Empty, cantidadNecesaria);
+                }
+            }
+        }
+        */
+        // Construir lista final consultando stock por producto (coincidencia por nombre)
+        foreach (var kv in acumulado)
+        {
+            // clave = "nombre|unidad"
+            var parts = kv.Key.Split('|');
+            var nombre = parts[0];
+            var unidad = kv.Value.Unidad;
+            var cantidadNecesaria = kv.Value.Cantidad;
+
+            // Buscar producto por nombre (case-insensitive, contains o exact)
+            var producto = productos.FirstOrDefault(p =>
+                !string.IsNullOrWhiteSpace(p.Nombre) &&
+                p.Nombre.Trim().Equals(nombre, StringComparison.OrdinalIgnoreCase));
+
+            var stockActual = producto?.StockActual ?? 0m;
+            var stockMinimo = producto?.StockMinimo ?? 0m;
+            var disponible = producto != null && stockActual >= cantidadNecesaria;
+
+            resultado.Items.Add(new ViveresItemDto
+            {
+                Nombre = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(nombre),
+                UnidadMedida = unidad ?? producto?.UnidadMedida ?? string.Empty,
+                CantidadNecesaria = Math.Round(cantidadNecesaria, 2),
+                StockActual = stockActual,
+                StockMinimo = stockMinimo,
+                Disponible = disponible,
+                ProductoId = producto?.Id
+            });
+        }
+
+        // Ordenar por nombre
+        resultado.Items = resultado.Items.OrderBy(i => i.Nombre).ToList();
+
+        return resultado;
+    }
+
+    // Helper privado que ya existía en la clase.
     private static byte[] ToBytes(XLWorkbook wb)
     {
         using var ms = new MemoryStream();

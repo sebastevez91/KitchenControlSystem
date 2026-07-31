@@ -6,8 +6,13 @@ using CocinaManager.Infrastructure.Data;
 using CocinaManager.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using CocinaManager.Application.Services;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Registrar licencia de QuestPDF al inicio de la aplicación
+QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Services.AddDbContext<CocinaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -21,10 +26,10 @@ builder.Services.AddScoped<IHerramientaRepository, HerramientaRepository>();
 builder.Services.AddScoped<IOrdenMantenimientoRepository, OrdenMantenimientoRepository>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IRecetaRepository, RecetaRepository>();
-builder.Services.AddScoped<IPlanMenuRepository, PlanMenuRepository>();
 builder.Services.AddScoped<IIncidenteRepository, IncidenteRepository>();
 builder.Services.AddScoped<IAusenciaRepository, AusenciaRepository>();
 builder.Services.AddScoped<IMensajeRepository, MensajeRepository>();
+builder.Services.AddScoped<IRecepcionViveresRepository, RecepcionViveresRepository>();
 
 // Servicios
 builder.Services.AddScoped<IPersonalService, PersonalService>();
@@ -35,10 +40,17 @@ builder.Services.AddScoped<IHerramientaService, HerramientaService>();
 builder.Services.AddScoped<IOrdenMantenimientoService, OrdenMantenimientoService>();
 builder.Services.AddScoped<IReporteService, ReporteService>();
 builder.Services.AddScoped<IRecetaService, RecetaService>();
-builder.Services.AddScoped<IPlanMenuService, PlanMenuService>();
 builder.Services.AddScoped<IIncidenteService, IncidenteService>();
 builder.Services.AddScoped<IAusenciaService, AusenciaService>();
 builder.Services.AddScoped<IMensajeService, MensajeService>();
+builder.Services.AddScoped<IRecepcionViveresService, RecepcionViveresService>();
+builder.Services.AddScoped<IRecepcionMovimientosService, ReporteMovimientosService>();
+builder.Services.AddScoped<IPlanMenuService, PlanMenuService>();
+builder.Services.AddScoped<IPlanMenuRepository, PlanMenuRepository>();
+builder.Services.AddScoped<IRegistroComensalesRepository, RegistroComensalesRepository>();
+builder.Services.AddScoped<IComensalesService, ComensalesService>();
+builder.Services.AddScoped<IMenuSemanalService, MenuSemanalService>();
+builder.Services.AddScoped<IMenuPdfService, MenuPdfService>();
 
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();

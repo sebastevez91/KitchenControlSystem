@@ -20,13 +20,13 @@ public class MovimientoStock
 
     private MovimientoStock() { }
 
-    public MovimientoStock(Guid productoId, TipoMovimiento tipoMovimiento, decimal cantidad, string observacion)
+    public MovimientoStock(Guid productoId, TipoMovimiento tipoMovimiento, decimal cantidad, string observacion, DateTime fecha)
     {
         Id = Guid.NewGuid();
         ProductoId = productoId;
         TipoMovimiento = tipoMovimiento;
         Cantidad = cantidad;
-        Fecha = DateTime.UtcNow;
+        Fecha = fecha;
         Observacion = observacion;
     }
 }

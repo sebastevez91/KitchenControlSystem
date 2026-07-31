@@ -20,6 +20,10 @@ public class UsuariosModel : PageModel
     [BindProperty] public string Password { get; set; } = string.Empty;
     [BindProperty] public RolUsuario Rol { get; set; }
 
+    // Campos Opcionales
+    [BindProperty] public string Nombre {  get; set; } = string.Empty;
+    [BindProperty] public string Apellido {  get; set; } = string.Empty;
+
     public UsuariosModel(CocinaDbContext context)
     {
         _context = context;
@@ -45,7 +49,7 @@ public class UsuariosModel : PageModel
             return RedirectToPage();
         }
 
-        var usuario = new Usuario(NombreUsuario, UsuarioService.HashPassword(Password), Rol);
+        var usuario = new Usuario(NombreUsuario, UsuarioService.HashPassword(Password), Rol, Nombre, Apellido);
         await _context.Usuarios.AddAsync(usuario);
         await _context.SaveChangesAsync();
 

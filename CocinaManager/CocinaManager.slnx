@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Elementos de la solución/">
+    <File Path="CocinaManager.bat" />
+  </Folder>
   <Project Path="CocinaManager.API/CocinaManager.API.csproj" Id="114a02eb-dc92-4dec-9aaa-bb2636350104" />
   <Project Path="CocinaManager.Application/CocinaManager.Application.csproj" Id="c03c4132-dd1c-4443-9b60-63e52c66ac30" />
   <Project Path="CocinaManager.Domain/CocinaManager.Domain.csproj" Id="af735a36-d189-447c-a234-95bc83def739" />

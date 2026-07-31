@@ -1,0 +1,67 @@
+﻿@page
+@model CocinaManager.API.Pages.Recepciones.IndexModel
+@{
+    ViewData["Title"] = "Recepciones";
+}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h1><i class="bi bi-box-seam me-2"></i>Recepciones</h1>
+        <p class="mb-0">Listado de recepciones</p>
+    </div>
+    <div class="d-flex gap-2" style="justify-content: flex-end;">
+        <a class="btn btn-primary" href="/Recepciones/Create"><i class="bi bi-plus-lg me-1"></i> Nueva Recepción</a>
+    </div>
+</div>
+
+<form method="get" class="d-flex align-items-center gap-2 mb-3">
+    <label class="mb-0 fw-semibold">Fecha</label>
+    <input name="fecha" type="date" class="form-control form-control-sm" value="@(Model.Fecha.ToString("yyyy-MM-dd"))" />
+    <button type="submit" class="btn btn-sm btn-outline-primary">Filtrar</button>
+    <a class="btn btn-sm btn-outline-secondary ms-2" href="?fecha=@DateTime.Today.ToString("yyyy-MM-dd")">Hoy</a>
+</form>
+
+@if (!string.IsNullOrEmpty(Model.Mensaje))
+{
+    <div class="alert alert-info">@Model.Mensaje</div>
+}
+
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-list-check me-2"></i>Recepciones — @Model.Fecha.ToString("dd/MM/yyyy")
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Proveedor</th>
+                        <th>Remito</th>
+                        <th>Recibido Por</th>
+                        <th>Lineas</th>
+                        <th>Fecha</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model.Recepciones.OrderByDescending(x => x.Fecha))
+                    {
+                        <tr>
+                            <td class="fw-semibold">@r.Proveedor</td>
+                            <td>@r.Remito</td>
+                            <td>@r.RecibidoPor (@r.DniRecibidoPor)</td>
+                            <td>@r.Lineas.Count</td>
+                            <td>@r.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary me-1" asp-page="Details" asp-route-id="@r.Id">Detalles</a>
+                                <a class="btn btn-sm btn-outline-success me-1" asp-page-handler="Download" asp-route-id="@r.Id">PDF</a>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@r.Id" onsubmit="return confirm('¿Deshacer esta recepción?');" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

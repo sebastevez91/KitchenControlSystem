@@ -16,7 +16,7 @@
     <link rel="icon" type="image/png" href="/img/logo-CM-TR.png" />
     <style>
         body {
-            background-color: #f8f9fa;
+            background-color: #2b4157;
         }
 
         .sidebar {
@@ -80,7 +80,6 @@
             .page-header h1 {
                 font-size: 1.6rem;
                 font-weight: 700;
-                color: #1a1a2e;
             }
 
         .card {
@@ -156,45 +155,27 @@
 <body>
     <div class="sidebar">
         <div class="brand">
-            <img src="/img/logo-CM-TR.png" alt="CocinaManager" style="height:120px; width:auto; margin-left:30px;" />
+            <img src="/img/CM_Logo.png" alt="CocinaManager" style="height:120px; width:auto; margin-left:30px;" />
         </div>
         <nav class="mt-3">
             <div class="nav-section">General</div>
             <a class="nav-link @(ViewData["ActivePage"]?.ToString() == "Dashboard" ? "active" : "")" href="/">
-                <i class="bi bi-speedometer2"></i> Dashboard
+            Dashboard
             </a>
-
-            <div class="nav-section">Reportes</div>
-            <a class="nav-link" href="/api/reportes/personal" target="_blank">
-                <i class="bi bi-file-earmark-excel"></i> Personal
+            <a class="nav-link @(ViewData["ActivePage"]?.ToString() == "Reportes" ? "active" : "")" href="/Reportes">
+            Reportes
             </a>
-            <a class="nav-link" href="/api/reportes/turnos" target="_blank">
-                <i class="bi bi-file-earmark-excel"></i> Turnos
+            <a class="nav-link @(ViewData["ActivePage"]?.ToString() == "Recetas" ? "active" : "")" href="/Menu">
+            Recetas y Menús
             </a>
-            <a class="nav-link" href="/api/reportes/productos-stock" target="_blank">
-                <i class="bi bi-file-earmark-excel"></i> Stock
+            <a class="nav-link @(ViewData["ActivePage"]?.ToString() == "Depósito" ? "active" : "")" href="/Deposito">
+            Depósito
             </a>
-            <a class="nav-link" href="/api/reportes/movimientos-stock" target="_blank">
-                <i class="bi bi-file-earmark-excel"></i> Movimientos
+            <a class="nav-link @(ViewData["ActivePage"]?.ToString() == "Personal" ? "active" : "")" href="/Personal">
+            Personal
             </a>
-            <a class="nav-link @(ViewData["ActivePage"]?.ToString() == "Calendario" ? "active" : "")" href="/Calendario">
-                <i class="bi bi-calendar3-fill"></i> Calendario
-            </a>
-            <a class="nav-link @(ViewData["ActivePage"]?.ToString() == "Recetas" ? "active" : "")" href="/Recetas">
-                <i class="bi bi-journal-richtext-fill"></i> Recetas y Menús
-            </a>
-            <a class="nav-link @(ViewData["ActivePage"]?.ToString() == "Incidentes" ? "active" : "")" href="/Incidentes">
-                <i class="bi bi-exclamation-octagon-fill"></i> Incidentes
-            </a>
-            <a class="nav-link @(ViewData["ActivePage"]?.ToString() == "Ausencias" ? "active" : "")" href="/Ausencias">
-                <i class="bi bi-calendar-x-fill"></i> Ausencias
-            </a>
-            <a class="nav-link @(ViewData["ActivePage"]?.ToString() == "Buzon" ? "active" : "")" href="/Buzon">
-                <i class="bi bi-envelope-fill"></i> Buzón
-                @if (noLeidos > 0)
-                {
-                    <span class="badge bg-danger ms-auto">@noLeidos</span>
-                }
+            <a class="nav-link @(ViewData["ActivePage"]?.ToString() == "Mantenimiento" ? "active" : "")" href="/Mantenimiento">
+            Mantenimiento
             </a>
         </nav>
     </div>
@@ -260,6 +241,15 @@
                         </a>
                     </li>
                 }
+
+                <!-- Buzón de mensajes -->
+                <a class="dropdown-item d-flex align-items-center gap-2 py-2 @(ViewData["ActivePage"]?.ToString() == "Buzon" ? "active" : "")" href="/Buzon">
+                    <i class="bi bi-envelope-fill"></i> Buzón
+                    @if (noLeidos > 0)
+                    {
+                        <span class="badge bg-danger ms-auto">@noLeidos</span>
+                    }
+                </a>
 
                 <li><hr class="dropdown-divider my-1"></li>
 

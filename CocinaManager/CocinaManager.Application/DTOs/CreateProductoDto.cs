@@ -14,4 +14,7 @@ public class CreateProductoDto
 
     [Range(0.01, double.MaxValue, ErrorMessage = "El stock mínimo debe ser mayor a 0.")]
     public decimal StockMinimo { get; set; }
+
+    [Required(ErrorMessage = "La categoría es obligatoria.")]
+    public Guid CategoriaId { get; set; }
 }

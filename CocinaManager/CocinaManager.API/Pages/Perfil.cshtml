@@ -4,80 +4,87 @@
     ViewData["Title"] = "Mi Perfil";
 }
 
-<div class="page-header">
-    <h1><i class="bi bi-person-circle me-2"></i>Mi Perfil</h1>
-    <p class="text-muted mb-0">Información de tu cuenta</p>
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div class="stat-card text-white" style="background: linear-gradient(135deg, #0d6efd, #000); width: stretch;">
+        <h1><i class="bi bi-person-circle me-2"></i>Mi Perfil</h1>
+        <p class="mb-0">Actualizá tu nombre y apellido</p>
+    </div>
 </div>
 
-<div class="row g-4">
-    <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body py-4">
-                <!-- Avatar grande -->
-                <div class="avatar-circle mx-auto mb-3"
-                     style="width:80px; height:80px; font-size:1.8rem;">
-                    @Model.NombreUsuario[..Math.Min(2, Model.NombreUsuario.Length)].ToUpper()
-                </div>
-                <h4 class="fw-bold mb-1">@Model.NombreUsuario</h4>
-                <span class="badge px-3 py-2"
-                      style="background-color:@(Model.Rol == "Administrador" ? "#764ba2" : "#6c757d"); font-size:0.85rem;">
-                    @Model.Rol
-                </span>
-                <hr />
-                <div class="row g-3 text-center">
-                    <div class="col-6">
-                        <div class="fw-bold fs-4 text-primary">@Model.TurnosHoy</div>
-                        <div class="text-muted small">Turnos hoy</div>
-                    </div>
-                    <div class="col-6">
-                        <div class="fw-bold fs-4 text-primary">@Model.TotalTurnos</div>
-                        <div class="text-muted small">Turnos totales</div>
-                    </div>
-                </div>
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Mensaje"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <!-- Nombre -->
+        <div class="mb-3 d-flex justify-content-between align-items-center">
+            <div>
+                <label class="form-label fw-semibold mb-1">Nombre</label>
+                <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(Model.Nombre) ? Model.Nombre : "<sin nombre>")</div>
             </div>
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarNombre">Editar</button>
+        </div>
+
+        <!-- Apellido -->
+        <div class="mb-3 d-flex justify-content-between align-items-center">
+            <div>
+                <label class="form-label fw-semibold mb-1">Apellido</label>
+                <div class="fw-semibold">@(!string.IsNullOrWhiteSpace(Model.Apellido) ? Model.Apellido : "<sin apellido>")</div>
+            </div>
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarApellido">Editar</button>
         </div>
     </div>
+</div>
 
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <i class="bi bi-info-circle me-2"></i>Información de la cuenta
+<!-- Modal Editar Nombre -->
+<div class="modal fade" id="modalEditarNombre" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Nombre</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="card-body">
-                <table class="table table-borderless mb-0">
-                    <tbody>
-                        <tr>
-                            <td class="text-muted fw-semibold" style="width:160px;">
-                                <i class="bi bi-person me-2"></i>Usuario
-                            </td>
-                            <td class="fw-semibold">@Model.NombreUsuario</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted fw-semibold">
-                                <i class="bi bi-shield me-2"></i>Rol
-                            </td>
-                            <td>
-                                <span class="badge px-3"
-                                      style="background-color:@(Model.Rol == "Administrador" ? "#764ba2" : "#6c757d");">
-                                    @Model.Rol
-                                </span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted fw-semibold">
-                                <i class="bi bi-calendar me-2"></i>Fecha
-                            </td>
-                            <td>@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted fw-semibold">
-                                <i class="bi bi-circle-fill me-2 text-success" style="font-size:0.6rem;"></i>Estado
-                            </td>
-                            <td class="text-success fw-semibold">Sesión activa</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <form method="post" asp-page-handler="GuardarNombre">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nombre</label>
+                        <input asp-for="Nombre" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Apellido -->
+<div class="modal fade" id="modalEditarApellido" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Apellido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            <form method="post" asp-page-handler="GuardarApellido">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Apellido</label>
+                        <input asp-for="Apellido" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

@@ -1,0 +1,234 @@
+@page
+@model CocinaManager.API.Pages.Recepciones.CreateModel
+
+<h3>Registrar Recepción de víveres</h3>
+
+<form method="post" id="formRecepcion" onsubmit="return onSubmitRecepcion()">
+    <div id="errors"></div>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Fecha</label>
+            <input asp-for="NuevaRecepcion.Fecha" class="form-control" type="date" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Proveedor</label>
+            <input asp-for="NuevaRecepcion.Proveedor" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Planilla / N°</label>
+            <input asp-for="NuevaRecepcion.Remito" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Recibido por</label>
+            <input asp-for="NuevaRecepcion.RecibidoPor" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">DNI</label>
+            <input asp-for="NuevaRecepcion.DniRecibidoPor" class="form-control" />
+        </div>
+        <div class="col-12">
+            <label class="form-label">Observaciones</label>
+            <input asp-for="NuevaRecepcion.Observaciones" class="form-control" />
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <strong>Lineas</strong>
+        <button type="button" class="btn btn-sm btn-outline-primary" onclick="agregarLinea()">Agregar línea</button>
+    </div>
+
+    <div id="lineas" class="d-flex flex-column gap-2"></div>
+
+    <input type="hidden" asp-for="LineasJson" id="lineasJson" />
+
+    <div class="mt-3 text-end">
+        <button type="submit" class="btn btn-primary">Guardar y Generar PDF</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        // Nota: usar Html.Raw para emitir JSON sin escape
+        const productos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Productos ?? new List<CocinaManager.Application.DTOs.ProductoDto>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        let lineas = [];
+
+        function crearSelectProductos(lineId) {
+            const select = document.createElement('select');
+            select.className = 'form-select form-select-sm';
+            select.onchange = () => rellenarDatosProducto(lineId, select);
+            const empty = document.createElement('option');
+            empty.value = '';
+            empty.text = '-- Seleccione producto --';
+            select.appendChild(empty);
+
+            for (const p of productos) {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.text = p.nombre + ' (' + (p.unidadMedida || '') + ')';
+                opt.dataset.unidad = p.unidadMedida ?? '';
+                opt.dataset.nombre = p.nombre ?? '';
+                select.appendChild(opt);
+            }
+            return select;
+        }
+
+        function agregarLinea() {
+            const id = Date.now();
+            const div = document.createElement('div');
+            div.className = 'row g-2 align-items-center';
+            div.id = `ln-${id}`;
+
+            const colProd = document.createElement('div'); colProd.className = 'col-5';
+            const sel = crearSelectProductos(id); colProd.appendChild(sel);
+
+            const colCant = document.createElement('div'); colCant.className = 'col-2';
+            const inpCant = document.createElement('input'); inpCant.type = 'number'; inpCant.step = '0.01'; inpCant.min = '0.01';
+            inpCant.className = 'form-control form-control-sm'; inpCant.placeholder = 'Cantidad'; inpCant.onchange = () => actualizarLinea(id);
+            colCant.appendChild(inpCant);
+
+            const colUni = document.createElement('div'); colUni.className = 'col-2';
+            const inpUni = document.createElement('input'); inpUni.type = 'text'; inpUni.className = 'form-control form-control-sm';
+            inpUni.placeholder = 'Unidad'; inpUni.onchange = () => actualizarLinea(id); colUni.appendChild(inpUni);
+
+            const colObs = document.createElement('div'); colObs.className = 'col-2';
+            const inpObs = document.createElement('input'); inpObs.type = 'text'; inpObs.className = 'form-control form-control-sm';
+            inpObs.placeholder = 'Observación'; inpObs.onchange = () => actualizarLinea(id); colObs.appendChild(inpObs);
+
+            const colRm = document.createElement('div'); colRm.className = 'col-1';
+            const btnRm = document.createElement('button'); btnRm.type = 'button'; btnRm.className = 'btn btn-sm btn-outline-danger';
+            btnRm.onclick = () => quitarLinea(id); btnRm.innerHTML = '<i class="bi bi-x"></i>'; colRm.appendChild(btnRm);
+
+            const feedback = document.createElement('div'); feedback.className = 'invalid-feedback d-block small';
+            feedback.style.display = 'none'; feedback.innerText = '';
+
+            div.appendChild(colProd); div.appendChild(colCant); div.appendChild(colUni); div.appendChild(colObs); div.appendChild(colRm); div.appendChild(feedback);
+
+            document.getElementById('lineas').appendChild(div);
+            lineas.push({ id, productoId: '', nombreProducto: '', cantidad: 0, unidad: '', observacion: '' });
+        }
+
+        function rellenarDatosProducto(id, select) {
+            const idx = lineas.findIndex(x => x.id === id);
+            if (idx < 0) return;
+            const selVal = select.value;
+            lineas[idx].productoId = selVal || '';
+            const opt = select.selectedOptions[0];
+            lineas[idx].nombreProducto = opt?.dataset?.nombre || '';
+            lineas[idx].unidad = opt?.dataset?.unidad || '';
+            const row = document.getElementById(`ln-${id}`);
+            if (row) {
+                const unidadInput = row.querySelector('input[placeholder="Unidad"]');
+                if (unidadInput) unidadInput.value = lineas[idx].unidad;
+            }
+            limpiarErroresLinea(id);
+        }
+
+        function actualizarLinea(id) {
+            const row = document.getElementById(`ln-${id}`);
+            if (!row) return;
+            const select = row.querySelector('select');
+            const inputs = row.querySelectorAll('input');
+            const idx = lineas.findIndex(x => x.id === id);
+            if (idx >= 0) {
+                lineas[idx].productoId = select?.value || '';
+                lineas[idx].nombreProducto = select?.selectedOptions[0]?.dataset?.nombre || lineas[idx].nombreProducto;
+                lineas[idx].cantidad = parseFloat(inputs[0].value) || 0;
+                lineas[idx].unidad = inputs[1].value;
+                lineas[idx].observacion = inputs[2].value;
+            }
+            limpiarErroresLinea(id);
+        }
+
+        function quitarLinea(id) {
+            document.getElementById(`ln-${id}`)?.remove();
+            lineas = lineas.filter(x => x.id !== id);
+            limpiarResumenErrores();
+        }
+
+        function limpiarErroresLinea(id) {
+            const row = document.getElementById(`ln-${id}`);
+            if (!row) return;
+            row.querySelectorAll('select, input').forEach(e => e.classList.remove('is-invalid'));
+            const fb = row.querySelector('.invalid-feedback');
+            if (fb) { fb.style.display = 'none'; fb.innerText = ''; }
+        }
+
+        function limpiarResumenErrores() {
+            const container = document.getElementById('errors');
+            container.innerHTML = '';
+        }
+
+        function validarLineas() {
+            limpiarResumenErrores();
+            let ok = true;
+            const errores = [];
+            for (const ln of lineas) {
+                const row = document.getElementById(`ln-${ln.id}`);
+                if (!row) continue;
+                const select = row.querySelector('select');
+                const inputs = row.querySelectorAll('input');
+                select.classList.remove('is-invalid');
+                inputs.forEach(i => i.classList.remove('is-invalid'));
+                const fb = row.querySelector('.invalid-feedback');
+                if (ln.productoId === '' || ln.productoId === null) {
+                    ok = false;
+                    errores.push('Producto requerido en una línea.');
+                    select.classList.add('is-invalid');
+                    if (fb) { fb.style.display = 'block'; fb.innerText = 'Producto requerido.'; }
+                }
+                const cantidad = parseFloat(ln.cantidad) || 0;
+                if (cantidad <= 0) {
+                    ok = false;
+                    errores.push('Cantidad debe ser mayor a 0 en una línea.');
+                    if (inputs[0]) inputs[0].classList.add('is-invalid');
+                    if (fb) { fb.style.display = 'block'; fb.innerText = (fb.innerText ? fb.innerText + ' ' : '') + 'Cantidad > 0.'; }
+                }
+            }
+
+            if (!ok) {
+                const container = document.getElementById('errors');
+                container.innerHTML = `<div class="alert alert-danger"><ul>${[...new Set(errores)].map(e => `<li>${e}</li>`).join('')}</ul></div>`;
+            }
+            return ok;
+        }
+
+        function serializarLineas() {
+            document.querySelectorAll('#lineas .row').forEach(row => {
+                const id = parseInt(row.id.replace('ln-', ''), 10);
+                const select = row.querySelector('select');
+                const inputs = row.querySelectorAll('input');
+                const idx = lineas.findIndex(x => x.id === id);
+                if (idx >= 0) {
+                    lineas[idx].productoId = select?.value || '';
+                    lineas[idx].nombreProducto = select?.selectedOptions[0]?.dataset?.nombre || lineas[idx].nombreProducto;
+                    lineas[idx].cantidad = parseFloat(inputs[0].value) || 0;
+                    lineas[idx].unidad = inputs[1].value;
+                    lineas[idx].observacion = inputs[2].value;
+                }
+            });
+
+            const payload = lineas
+                .filter(l => l.productoId && l.productoId !== '')
+                .map(l => ({
+                    productoId: l.productoId,
+                    nombreProducto: l.nombreProducto,
+                    cantidad: l.cantidad,
+                    unidad: l.unidad,
+                    observacion: l.observacion
+                }));
+
+            document.getElementById('lineasJson').value = JSON.stringify(payload);
+        }
+
+        function onSubmitRecepcion() {
+            serializarLineas();
+            if (!validarLineas()) {
+                return false;
+            }
+            return true;
+        }
+    </script>
+}

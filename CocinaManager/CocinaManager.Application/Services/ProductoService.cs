@@ -39,7 +39,7 @@ public class ProductoService : IProductoService
     public async Task<ProductoDto> CreateAsync(CreateProductoDto dto)
     {
         _logger.LogInformation("Creando producto: {Nombre}", dto.Nombre);
-        var producto = new Producto(dto.Nombre, dto.UnidadMedida, dto.StockMinimo);
+        var producto = new Producto(dto.Nombre, dto.UnidadMedida, dto.StockMinimo, dto.CategoriaId);
         await _repo.AddAsync(producto);
         await _repo.SaveChangesAsync();
         _logger.LogInformation("Producto creado con Id: {Id}", producto.Id);
@@ -67,6 +67,7 @@ public class ProductoService : IProductoService
         Nombre = p.Nombre,
         UnidadMedida = p.UnidadMedida,
         StockActual = p.StockActual,
-        StockMinimo = p.StockMinimo
+        StockMinimo = p.StockMinimo,
+        CategoriaId = p.CategoriaId
     };
 }

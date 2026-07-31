@@ -10,6 +10,7 @@ public class CocinaDbContext : DbContext
     {
     }
 
+    public DbSet<Categoria> Categorias { get; set; }
     public DbSet<Personal> Personal { get; set; }
     public DbSet<Turno> Turnos { get; set; }
     public DbSet<Producto> Productos { get; set; }
@@ -19,10 +20,16 @@ public class CocinaDbContext : DbContext
     public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Receta> Recetas { get; set; }
     public DbSet<RecetaIngrediente> RecetaIngredientes { get; set; }
-    public DbSet<PlanMenu> PlanesMenu { get; set; }
     public DbSet<Incidente> Incidentes { get; set; }
     public DbSet<Ausencia> Ausencias { get; set; }
     public DbSet<Mensaje> Mensajes { get; set; }
+
+    // Nuevos DbSet para recepción de víveres
+    public DbSet<RecepcionViveres> RecepcionesViveres { get; set; }
+    public DbSet<RecepcionViveresLinea> RecepcionViveresLineas { get; set; }
+    public DbSet<PlanMenu> PlanesMenu { get; set; }
+    public DbSet<PlanMenuItem> PlanMenuItems { get; set; }
+    public DbSet<RegistroComensales> RegistrosComensales { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -56,6 +63,13 @@ public class CocinaDbContext : DbContext
             entity.Property(p => p.UnidadMedida).IsRequired().HasMaxLength(50);
             entity.Property(p => p.StockActual).HasColumnType("decimal(18,2)");
             entity.Property(p => p.StockMinimo).HasColumnType("decimal(18,2)");
+
+            // Relación requerida con Categoria
+            entity.HasOne(p => p.Categoria)
+                  .WithMany(c => c.Productos)
+                  .HasForeignKey(p => p.CategoriaId)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .IsRequired();
         });
 
         // MovimientoStock
@@ -120,18 +134,6 @@ public class CocinaDbContext : DbContext
             entity.Property(i => i.UnidadMedida).IsRequired().HasMaxLength(50);
         });
 
-        // Menú
-        modelBuilder.Entity<PlanMenu>(entity =>
-        {
-            entity.HasKey(p => p.Id);
-            entity.Property(p => p.TipoComida).IsRequired().HasMaxLength(50);
-            entity.Property(p => p.Observaciones).HasMaxLength(500);
-            entity.HasOne(p => p.Receta)
-                  .WithMany()
-                  .HasForeignKey(p => p.RecetaId)
-                  .OnDelete(DeleteBehavior.Restrict);
-        });
-
         // Incidentes
         modelBuilder.Entity<Incidente>(entity =>
         {
@@ -166,6 +168,65 @@ public class CocinaDbContext : DbContext
                   .HasForeignKey(m => m.MensajePadreId)
                   .OnDelete(DeleteBehavior.Restrict)
                   .IsRequired(false);
+        });
+
+        // RecepcionViveres
+        modelBuilder.Entity<RecepcionViveres>(entity =>
+        {
+            entity.HasKey(r => r.Id);
+            entity.Property(r => r.Proveedor).HasMaxLength(200);
+            entity.Property(r => r.Remito).HasMaxLength(100);
+            entity.Property(r => r.RecibidoPor).HasMaxLength(150);
+            entity.Property(r => r.DniRecibidoPor).HasMaxLength(20);
+            entity.Property(r => r.Observaciones).HasMaxLength(1000);
+
+            entity.HasMany(r => r.Lineas)
+                  .WithOne()
+                  .HasForeignKey("RecepcionViveresId")
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RecepcionViveresLinea>(entity =>
+        {
+            entity.HasKey(l => l.Id);
+            entity.Property(l => l.NombreProducto).IsRequired().HasMaxLength(200);
+            entity.Property(l => l.Cantidad).HasColumnType("decimal(18,2)");
+            entity.Property(l => l.Unidad).HasMaxLength(50);
+            entity.Property(l => l.Observacion).HasMaxLength(500);
+        });
+
+        // PlanMenu
+        modelBuilder.Entity<PlanMenu>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.DiaSemana).IsRequired();
+            entity.Property(p => p.TipoMenu).IsRequired();
+            entity.Property(p => p.FechaCreacion).IsRequired();
+            entity.HasIndex(p => new { p.DiaSemana, p.TipoMenu }).IsUnique(); // un solo plan por día+comida
+            entity.HasMany(p => p.Items)
+                  .WithOne()
+                  .HasForeignKey(i => i.PlanMenuId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // PlanMenuItem
+        modelBuilder.Entity<PlanMenuItem>(entity =>
+        {
+            entity.HasKey(i => i.Id);
+            entity.Property(i => i.RecetaId).IsRequired();
+            entity.HasOne(i => i.Receta)
+                  .WithMany()
+                  .HasForeignKey(i => i.RecetaId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // RegistroComensales
+        modelBuilder.Entity<RegistroComensales>(entity =>
+        {
+            entity.HasKey(r => r.Id);
+            entity.Property(r => r.Fecha).IsRequired();
+            entity.Property(r => r.Cantidad).IsRequired();
+            entity.HasIndex(r => r.Fecha).IsUnique(); // un solo registro por día
         });
     }
 }

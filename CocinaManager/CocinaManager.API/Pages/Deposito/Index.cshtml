@@ -4,18 +4,20 @@
     ViewData["Title"] = "Depósito";
 }
 
-<div class="page-header d-flex justify-content-between align-items-center">
-    <div>
-        <h1><i class="bi bi-box-seam-fill me-2"></i>Depósito</h1>
-        <p class="text-muted mb-0">Control de stock y movimientos de víveres</p>
-    </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalMovimiento">
-            <i class="bi bi-arrow-left-right me-1"></i> Registrar Movimiento
-        </button>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoProducto">
-            <i class="bi bi-plus-lg me-1"></i> Nuevo Producto
-        </button>
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div class="stat-card text-white" style="background: linear-gradient(135deg, #0d6efd, #000); width: stretch;">
+        <div>
+            <h1><i class="bi bi-box-seam-fill me-2"></i>Depósito</h1>
+            <p class="mb-0">Control de stock y movimientos de víveres</p>
+        </div>
+        <div class="d-flex gap-2" style="justify-content: flex-end;">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoProducto">
+                <i class="bi bi-plus-lg me-1"></i> Nuevo Producto
+            </button>
+            <a class="btn btn-primary" href="/Movimientos">
+                Movimientos de stock
+            </a>
+        </div>
     </div>
 </div>
 
@@ -26,6 +28,15 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
+
+<!-- Búsqueda -->
+<div class="mb-3 d-flex justify-content-end">
+    <form method="get" class="d-flex" style="gap:8px;">
+        <input name="q" class="form-control form-control-sm" placeholder="Buscar por nombre..." value="@(ViewData["SearchQuery"] ?? "")" />
+        <button class="btn btn-sm btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
+        <a class="btn btn-sm btn-outline-secondary" href="/Deposito">Limpiar</a>
+    </form>
+</div>
 
 <!-- Alerta stock bajo -->
 @if (Model.ProductosStockBajo.Any())
@@ -42,7 +53,7 @@
 <!-- Stats -->
 <div class="row g-4 mb-4">
     <div class="col-md-4">
-        <div class="stat-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+        <div class="stat-card" style="background: linear-gradient(135deg, #0d6efd, #000);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <div style="font-size:2rem; font-weight:700;">@Model.Productos.Count</div>
@@ -53,7 +64,7 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="stat-card" style="background: linear-gradient(135deg, #f7971e, #ffd200);">
+        <div class="stat-card" style="background: linear-gradient(135deg, #0d6efd, #000);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <div style="font-size:2rem; font-weight:700;">@Model.ProductosStockBajo.Count</div>
@@ -64,10 +75,10 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+        <div class="stat-card" style="background: linear-gradient(135deg, #0d6efd, #000);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <div style="font-size:2rem; font-weight:700;">@Model.Movimientos.Count</div>
+                    <!--<div style="font-size:2rem; font-weight:700;">Model.Movimientos.Count</div>-->
                     <div style="opacity:0.85;">Movimientos totales</div>
                 </div>
                 <i class="bi bi-arrow-left-right" style="font-size:2.5rem; opacity:0.4;"></i>
@@ -116,62 +127,32 @@
                             <td>
                                 @if (User.IsInRole("Admin"))
                                 {
-                                    <form method="post" asp-page-handler="EliminarProducto"
-                                          onsubmit="return confirm('¿Eliminar @p.Nombre?')">
-                                        <input type="hidden" name="id" value="@p.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-trash"></i>
+                                    <div class="d-flex gap-1">
+                                        <!-- Botón Editar: abre modal y pasa datos via data-* -->
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-secondary btn-abrir-editar"
+                                                title="Editar"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#modalEditarProducto"
+                                                data-id="@p.Id"
+                                                data-nombre="@p.Nombre"
+                                                data-unidadmedida="@p.UnidadMedida"
+                                                data-stockminimo="@p.StockMinimo"
+                                                data-categoriaid="@p.CategoriaId">
+                                            <i class="bi bi-pencil"></i>
                                         </button>
-                                    </form>
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
 
-<!-- Tabla Movimientos -->
-<div class="card">
-    <div class="card-header">
-        <i class="bi bi-clock-history me-2"></i>Historial de movimientos
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Producto</th>
-                        <th>Tipo</th>
-                        <th>Cantidad</th>
-                        <th>Fecha</th>
-                        <th>Observación</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var m in Model.Movimientos.OrderByDescending(x => x.Fecha))
-                    {
-                        <tr>
-                            <td class="fw-semibold">@m.NombreProducto</td>
-                            <td>
-                                @if (m.TipoMovimiento == TipoMovimiento.Entrada)
-                                {
-                                    <span class="badge bg-success badge-estado">
-                                        <i class="bi bi-arrow-down-circle me-1"></i>Entrada
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning text-dark badge-estado">
-                                        <i class="bi bi-arrow-up-circle me-1"></i>Salida
-                                    </span>
+                                        <!-- Botón Eliminar -->
+                                        <form method="post" asp-page-handler="EliminarProducto"
+                                              onsubmit="return confirm('¿Eliminar @p.Nombre?')" class="m-0">
+                                            <input type="hidden" name="id" value="@p.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 }
                             </td>
-                            <td>@m.Cantidad @m.NombreProducto</td>
-                            <td>@m.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
-                            <td class="text-muted">@m.Observacion</td>
                         </tr>
                     }
                 </tbody>
@@ -205,6 +186,19 @@
                         <input asp-for="NuevoProducto.StockMinimo" type="number" step="0.01" class="form-control" placeholder="0.00" />
                         <span asp-validation-for="NuevoProducto.StockMinimo" class="text-danger small"></span>
                     </div>
+
+                    <!-- Selección de Categoría (requerido) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Categoría</label>
+                        <select asp-for="NuevoProducto.CategoriaId" class="form-select">
+                            <option value="">-- Seleccioná una categoría --</option>
+                            @foreach (var c in Model.Categorias)
+                            {
+                                <option value="@c.Id">@c.Nombre</option>
+                            }
+                        </select>
+                        <span asp-validation-for="NuevoProducto.CategoriaId" class="text-danger small"></span>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -215,49 +209,84 @@
     </div>
 </div>
 
-<!-- Modal Registrar Movimiento -->
-<div class="modal fade" id="modalMovimiento" tabindex="-1">
+<!-- Modal Editar Producto -->
+<div class="modal fade" id="modalEditarProducto" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-arrow-left-right me-2"></i>Registrar Movimiento</h5>
+                <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Editar Producto</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" asp-page-handler="RegistrarMovimiento">
+            <form method="post" asp-page-handler="EditarProducto">
                 <div class="modal-body">
+                    <input asp-for="EditProducto.Id" type="hidden" />
+
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Producto</label>
-                        <select asp-for="NuevoMovimiento.ProductoId" class="form-select">
-                            <option value="">-- Seleccioná un producto --</option>
-                            @foreach (var p in Model.Productos)
+                        <label class="form-label fw-semibold">Nombre</label>
+                        <input asp-for="EditProducto.Nombre" class="form-control" />
+                        <span asp-validation-for="EditProducto.Nombre" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Unidad de medida</label>
+                        <input asp-for="EditProducto.UnidadMedida" class="form-control" />
+                        <span asp-validation-for="EditProducto.UnidadMedida" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Stock mínimo</label>
+                        <input asp-for="EditProducto.StockMinimo" type="number" step="0.01" class="form-control" />
+                        <span asp-validation-for="EditProducto.StockMinimo" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Selección de Categoría -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Categoría</label>
+                        <select asp-for="EditProducto.CategoriaId" class="form-select">
+                            <option value="">-- Seleccioná una categoría --</option>
+                            @foreach (var c in Model.Categorias)
                             {
-                                <option value="@p.Id">@p.Nombre (@p.StockActual @p.UnidadMedida)</option>
+                                <option value="@c.Id">@c.Nombre</option>
                             }
                         </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Tipo de movimiento</label>
-                        <select asp-for="NuevoMovimiento.TipoMovimiento" class="form-select">
-                            @foreach (var t in Enum.GetValues<TipoMovimiento>())
-                            {
-                                <option value="@((int)t)">@t</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Cantidad</label>
-                        <input asp-for="NuevoMovimiento.Cantidad" type="number" step="0.01" class="form-control" placeholder="0.00" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Observación <span class="text-muted fw-normal">(opcional)</span></label>
-                        <input asp-for="NuevoMovimiento.Observacion" class="form-control" placeholder="Ej: Compra semanal" />
+                        <span asp-validation-for="EditProducto.CategoriaId" class="text-danger small"></span>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Registrar</button>
+                    <button type="submit" class="btn btn-primary">Actualizar</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Poblar modal de edición con los datos del botón
+        document.addEventListener('DOMContentLoaded', function () {
+            const editarButtons = document.querySelectorAll('.btn-abrir-editar');
+            editarButtons.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const id = btn.getAttribute('data-id') || '';
+                    const nombre = btn.getAttribute('data-nombre') || '';
+                    const unidad = btn.getAttribute('data-unidadmedida') || '';
+                    const stockmin = btn.getAttribute('data-stockminimo') || '0';
+                    const categoriaid = btn.getAttribute('data-categoriaid') || '';
+
+                    // Set inputs inside modal
+                    const modal = document.getElementById('modalEditarProducto');
+                    if (!modal) return;
+
+                    modal.querySelector('input[name="EditProducto.Id"]').value = id;
+                    modal.querySelector('input[name="EditProducto.Nombre"]').value = nombre;
+                    modal.querySelector('input[name="EditProducto.UnidadMedida"]').value = unidad;
+                    modal.querySelector('input[name="EditProducto.StockMinimo"]').value = stockmin;
+
+                    const selectCat = modal.querySelector('select[name="EditProducto.CategoriaId"]');
+                    if (selectCat) {
+                        selectCat.value = categoriaid;
+                    }
+                });
+            });
+        });
+    </script>
+}

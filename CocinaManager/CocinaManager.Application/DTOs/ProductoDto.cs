@@ -8,4 +8,6 @@ public class ProductoDto
     public decimal StockActual { get; set; }
     public decimal StockMinimo { get; set; }
     public bool StockBajo => StockActual <= StockMinimo;
+    // Ahora obligatorio en DTO también
+    public Guid CategoriaId { get; set; } 
 }
